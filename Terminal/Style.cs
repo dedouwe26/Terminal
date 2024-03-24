@@ -1,7 +1,13 @@
-namespace Terminal;
+namespace OxDEDTerm;
 
 public class Style {
+    /// <summary>
+    /// Interferes with <see cref="Faint"/>.
+    /// </summary>
     public bool Bold = false;
+    /// <summary>
+    /// Interferes with <see cref="Bold"/>.
+    /// </summary>
     public bool Faint = false;
     public bool Italic = false;
     public bool Underline = false;
@@ -14,12 +20,12 @@ public class Style {
     /// </summary>
     public bool DoubleUnderLine = false;
 
-    public required Color foregroundColor;
-    public required Color backgroundColor;
+    public Color foregroundColor = Colors.Default;
+    public Color backgroundColor = Colors.Default;
     public string ToANSI() {
         return 
             (Bold ? ANSI.Styles.Bold : ANSI.Styles.ResetBold) +
-            (Faint ? ANSI.Styles.Faint : ANSI.Styles.ResetFaint) +
+            (Faint ? ANSI.Styles.Faint : (Bold ? ANSI.Styles.ResetFaint : "")) +
             (Italic ? ANSI.Styles.Italic : ANSI.Styles.ResetItalic) +
             (Underline ? ANSI.Styles.Underline : ANSI.Styles.ResetUnderline) +
             (Blink ? ANSI.Styles.Blink : ANSI.Styles.ResetBlink) +

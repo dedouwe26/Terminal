@@ -1,4 +1,4 @@
-namespace Terminal;
+namespace OxDEDTerm;
 
 
 /// <summary>
@@ -53,8 +53,17 @@ public enum Colors : byte {
     Default = 39,
 }
 public class Color {
+    /// <summary>
+    /// The 8-bit (generated) table color.
+    /// </summary>
     public byte? tableColor = null;
+    /// <summary>
+    /// The basic color set.
+    /// </summary>
     public Colors? paletteColor = null;
+    /// <summary>
+    /// 24-bit True color.
+    /// </summary>
     public (byte r, byte g, byte b)? trueColor = null;
     public bool HasTrueColor {get { return (!(tableColor.HasValue && paletteColor.HasValue))&&trueColor.HasValue; }}
     public bool HasPaletteColor {get { return (!(tableColor.HasValue && trueColor.HasValue))&&paletteColor.HasValue; }}
@@ -93,6 +102,11 @@ public class Color {
         if (hex.Length < 6) { throw new ArgumentOutOfRangeException(nameof(hex), "The length was too small."); }
         trueColor = (Convert.ToByte(hex[..2], 16), Convert.ToByte(hex.Substring(2, 2), 16), Convert.ToByte(hex.Substring(4, 2), 16));
     }
+    /// <summary>
+    /// Creates an ANSI string for the background color.
+    /// </summary>
+    /// <returns>The ANSI string.</returns>
+    /// <exception cref="Exception"></exception>
     public string ToBackgroundANSI() {
         if (HasPaletteColor&&paletteColor.HasValue) {
             return ANSI.BasicSetBackgroundColor((byte)paletteColor.Value);
@@ -105,6 +119,11 @@ public class Color {
         }
         throw new Exception("No possible color.");
     }
+    /// <summary>
+    /// Creates an ANSI string for the foreground color.
+    /// </summary>
+    /// <returns>The ANSI string.</returns>
+    /// <exception cref="Exception"></exception>
     public string ToForegroundANSI() {
         if (HasPaletteColor&&paletteColor.HasValue) {
             return ANSI.BasicSetForegroundColor((byte)paletteColor.Value);
@@ -116,5 +135,26 @@ public class Color {
             return ANSI.TableForegroundColor(tableColor.Value);
         }
         throw new Exception("No possible color.");
+    }
+    /// <summary>
+    /// 255, 0, 0
+    /// </summary>
+    public static readonly Color Red = new(255, 0, 0);
+    public static readonly Color Green = new(0, 255, 0);
+    public static readonly Color Blue = new(0, 0, 255);
+    public static readonly Color LightRed = new(255, 80, 80);
+    public static readonly Color DarkGreen = new(30, 190, 30);
+    public static readonly Color DarkBlue = new(30, 30, 190);
+    public static readonly Color Yellow = new(255, 255, 0);
+    public static readonly Color Orange = new(255, 160, 0);
+    public static readonly Color Gray = new(180, 180, 180);
+    public static readonly Color Black = new(0, 0, 0);
+    public static readonly Color White = new(255, 255, 255);
+
+    public static implicit operator Color(Colors color) { return new(color); }
+    public static explicit operator Colors?(Color color) {  return color.paletteColor; }
+    public static explicit operator Colors(Color color) {
+        if (color.HasPaletteColor&&color.paletteColor.HasValue) { return color.paletteColor.Value; }
+        throw new Exception("No palette color.");
     }
 }

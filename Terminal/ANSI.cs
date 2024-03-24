@@ -1,11 +1,11 @@
-namespace Terminal;
+namespace OxDEDTerm;
 
 public static class ANSI {
     public const string ESC = "\x1B";
-    public const string CSI = "\x9B";
+    public const string CSI = ESC+"[";
     
     public const string EraseScreen = CSI+"2J";
-    public const string EraseFromCursor = CSI+"0J";
+    public const string EraseScreenFromCursor = CSI+"0J";
     public const string EraseLine = CSI+"2K";
     public const string EraseLineFromCursor = CSI+"0K";
     /// <summary>
@@ -19,12 +19,16 @@ public static class ANSI {
     public const string CursorVisible = CSI+"?25h";
 
     public static class Styles {
+        /// <summary>
+        /// Resets all text decoration, including colors.
+        /// </summary>
         public const string ResetAll = CSI+"0m";
 
         /// <summary>
-        /// Bold, interferes with <see cref="Faint"/>.
+        /// Bold, interferes with <see cref="Faint"/>. <para/>
+        /// NOTE: In Windows Terminal you will need to set the 'Intense text style' in the profile to 'Bold font'.
         /// </summary>
-        public const string Bold = CSI+"1m"; // NOTE: In Windows Terminal you will need to set the 'Intense text style' in the profile to 'Bold font'.
+        public const string Bold = CSI+"1m";
         /// <summary>
         /// Resets <see cref="Bold"/> or <see cref="Faint"/>.
         /// </summary>
@@ -70,7 +74,7 @@ public static class ANSI {
         /// non-specified, may only work in some terminals.
         /// </summary>
         public const string DoubleUnderLine = CSI+"21m";
-        public const string ResetDoubleUnderLine = CSI+"21m";
+        public const string ResetDoubleUnderLine = CSI+"24m";
     }
     public static string MoveCursor(int x, int y) {
         return CSI+y.ToString()+";"+x.ToString()+"H";

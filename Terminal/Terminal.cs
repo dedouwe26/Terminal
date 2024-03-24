@@ -1,16 +1,196 @@
-﻿namespace Terminal;
+﻿using System.Text;
+
+namespace OxDEDTerm;
+
+public delegate void OnKeyPress(ConsoleKey key, char keyChar, bool alt, bool shift, bool control);
 
 public static class Terminal {
+    static Terminal() {
+        OutEncoding = Encoding.UTF8;
+        InEncoding = Encoding.UTF8;
+        Console.CancelKeyPress+=(sender, e)=>{
+            e.Cancel = blockCancelKey;
+        };
+    }
+    private static Thread? listenForKeysThread;
+    private static bool _listenForKeys = false;
+    /// <summary>
+    /// If it should listen for keys.
+    /// </summary>
+    public static bool ListenForKeys {set {
+        if (value && (!_listenForKeys)) {
+            _listenForKeys = value;
+            listenForKeysThread = new Thread(ListenForKeysMethod);
+            listenForKeysThread.Start();
+        } else {
+            _listenForKeys = value;
+        }
+    } get {
+        return _listenForKeys;
+    }}
+    /// <summary>
+    /// If it should block CTRL + C.
+    /// </summary>
+    public static bool blockCancelKey = false;
+    /// <summary>
+    /// The out (to terminal) stream.
+    /// </summary>
     public static TextWriter Out {get { return Console.Out; } set { Console.SetOut(value); }}
+    /// <summary>
+    /// The in (from terminal) stream.
+    /// </summary>
     public static TextReader In {get { return Console.In; } set { Console.SetIn(value); }}
-    public static void Write<T>(T? text, Style? style) {
-        Out.Write(style?.ToANSI()+text);
+    /// <summary>
+    /// The error (to terminal) stream.
+    /// </summary>
+    public static TextWriter Error {get { return Console.Error; } set { Console.SetError(value); }}
+    /// <summary>
+    /// Hides or shows terminal cursor.
+    /// </summary>
+    public static bool HideCursor {set { Out.Write(value ? ANSI.CursorInvisible : ANSI.CursorVisible); }}
+    /// <summary>
+    /// The width (in characters) of the terminal.
+    /// </summary>
+    public static uint Width {get { return (uint)Console.WindowWidth; }}
+    /// <summary>
+    /// The height (in characters) of the terminal.
+    /// </summary>
+    public static uint Height {get { return (uint)Console.WindowHeight; }}
+    /// <summary>
+    /// The encoding used for the in stream (default: UTF-8).
+    /// </summary>
+    public static Encoding InEncoding {get { return Console.InputEncoding; } set {Console.InputEncoding = value; }}
+    /// <summary>
+    /// The encoding used for the error and out streams (default: UTF-8).
+    /// </summary>
+    public static Encoding OutEncoding {get { return Console.OutputEncoding; } set {Console.OutputEncoding = value; }}
+    /// <summary>
+    /// Writes something (<see cref="object.ToString"/>) to the terminal, with a style.
+    /// </summary>
+    /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
+    /// <param name="text">The thing to write to the terminal.</param>
+    /// <param name="style">The text decoration to use.</param>
+    public static void Write<T>(T? text, Style? style = null) {
+        Out.Write((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
-    public static void WriteLine<T>(T? text, Style? style) {
-        Out.WriteLine(style?.ToANSI()+text);
+    /// <summary>
+    /// Writes something (<see cref="object.ToString"/>) to the terminal, with a style.
+    /// </summary>
+    /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
+    /// <param name="text">The thing to write to the terminal.</param>
+    /// <param name="style">The text decoration to use.</param>
+    public static void WriteLine<T>(T? text, Style? style = null) {
+        Out.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
+    /// <summary>
+    /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
+    /// </summary>
+    /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
+    /// <param name="text">The text to write to the error output stream.</param>
+    /// <param name="style">The style to use (default: with red foreground).</param>
+    public static void WriteErrorLine<T>(T? text, Style? style = null) {
+        Error.WriteLine((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+    }
+    /// <summary>
+    /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
+    /// </summary>
+    /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
+    /// <param name="text">The text to write to the error output stream.</param>
+    /// <param name="style">The style to use (default: with red foreground).</param>
+    public static void WriteError<T>(T? text, Style? style = null) {
+        Error.Write((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+    }
+    /// <summary>
+    /// Sets the cursor to that position.
+    /// </summary>
+    /// <param name="pos">The position.</param>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    public static void Goto((int x, int y) pos) {
+        if (pos.x >= Width || pos.x < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos x is higher than the width or is lower than 0."); }
+        if (pos.y >= Height || pos.y < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos y is higher than the height or is lower than 0."); }
+        Out.Write(ANSI.MoveCursor(pos.x, pos.y));
+    }
+    /// <summary>
+    /// Gets the cursor position.
+    /// </summary>
+    /// <returns>The cursor position.</returns>
+    public static (int x, int y) GetCursorPosition() {
+        return Console.GetCursorPosition();
+    }
+    /// <summary>
+    /// Sets the something (<see cref="object.ToString"/>) at a position, with a style.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="text">The thing to set at <paramref name="pos"/> to the terminal.</param>
+    /// <param name="pos">The position to set <paramref name="text"/> at.</param>
+    /// <param name="style">The text decoration to use.</param>
+    public static void Set<T>(T? text, (int x, int y) pos, Style? style = null) {
+        Goto(pos);
+        Write(text, style);
+    }
+    /// <summary>
+    /// Reads one character from the input stream.
+    /// </summary>
+    /// <returns>The character that has been read (-1 if everything has been read).</returns>
+    public static int Read() {
+        return In.Read();
+    }
+    /// <summary>
+    /// Reads a line from the input stream.
+    /// </summary>
+    /// <returns>The line that has been read (null if everything has been read).</returns>
+    public static string? ReadLine() {
+        return In.ReadLine();
+    }
+    /// <summary>
+    /// Waits until a key is pressed.
+    /// </summary>
+    public static void WaitForKeyPress() {
+        Console.ReadKey(true);
+    }
+    /// <summary>
+    /// An event for when a key is pressed.
+    /// </summary>
+    public static event OnKeyPress? onKeyPress;
+
+    /// <summary>
+    /// Clears (resets) the whole screen.
+    /// </summary>
     public static void Clear() {
-        Out.Write(ANSI.EraseScreen);
+        Goto((0,0));
+        Out.Write(ANSI.EraseScreenFromCursor);
+    }
+    /// <summary>
+    /// Clears screen from the position to end of the screen.
+    /// </summary>
+    /// <param name="pos">The start position.</param>
+    public static void ClearFrom((int x, int y) pos) {
+        Goto(pos);
+        Out.Write(ANSI.EraseLineFromCursor);
+    }
+    /// <summary>
+    /// Clears (deletes) a line.
+    /// </summary>
+    /// <param name="line">The y-axis of the line.</param>
+    public static void ClearLine(int line) {
+        Goto((0, line));
+        Out.Write(ANSI.EraseLine);
+    }
+    /// <summary>
+    /// Clears the line from the position to the end of the line.
+    /// </summary>
+    /// <param name="pos">The start position.</param>
+    public static void ClearLineFrom((int x, int y) pos) {
+        Goto(pos);
+        Out.Write(ANSI.EraseLineFromCursor);
+    }
+    private static void ListenForKeysMethod() {
+        while (_listenForKeys) {
+            ConsoleKeyInfo key = Console.ReadKey(true);
+            if (!Console.IsInputRedirected) {
+                onKeyPress?.Invoke(key.Key, key.KeyChar, key.Modifiers.HasFlag(ConsoleModifiers.Alt), key.Modifiers.HasFlag(ConsoleModifiers.Shift), key.Modifiers.HasFlag(ConsoleModifiers.Control));
+            }
+        }
     }
 
 }
