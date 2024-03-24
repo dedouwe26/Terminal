@@ -5,8 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>0xDED.Terminal</PackageId>
-  <Version>1.0.0</Version>
-  <Authors>0xDED</Authors>
+    <Version>1.0.0</Version>
+    <Authors>0xDED</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\"/>
