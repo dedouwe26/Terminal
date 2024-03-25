@@ -206,3 +206,20 @@ public class Logger : IDisposable {
         GC.SuppressFinalize(this);
     }
 }
+
+/// <summary>
+/// Represents a target for logger outputs.
+/// </summary>
+public interface ITarget : IDisposable {
+    public bool enabled;
+    /// <summary>
+    /// The method to write to output
+    /// </summary>
+    /// <typeparam name="T">The type of the text.</typeparam>
+    /// <param name="severity">The severity of the message.</param>
+    /// <param name="time">The time when it has been logged.</param>
+    /// <param name="name">The name of the logger.</param>
+    /// <param name="ID">The ID of the logger.</param>
+    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
+    public void Write<T>(Severity severity, DateTime time, string name, string ID, T? text);
+}
