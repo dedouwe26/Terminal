@@ -1,3 +1,5 @@
+using System.Reflection.Metadata.Ecma335;
+
 namespace OxDEDTerm;
 
 /// <summary>
@@ -51,49 +53,28 @@ public enum Severity : byte {
 /// Represents a logger for the terminal and log files.
 /// </summary>
 public class Logger : IDisposable {
-    /// <summary>
-    /// Options for a logger.
-    /// </summary>
-    public struct Options {
-        public bool shouldWriteToTerminal = true;
-        public bool shouldWriteToFile = true;
-        public Options() { }
-    }
     public string ID;
     public string Name;
-    public TextWriter Out;
-    public TextWriter? FileOut;
-    public Options options;
+    /// <summary>
+    /// All the targets, key MUST BE nameof(...Target).
+    /// </summary>
+    public Dictionary<string, (ITarget target, bool enabled)> Targets;
     public Severity logLevel = Severity.Info;
     /// <summary>
     /// Creates a logger.
     /// </summary>
     /// <param name="id">The ID to identify this logger, like 'me.0xDED.MyProject' (if this ID is already registered it will throw an <see cref="ArgumentException"/> error).</param>
     /// <param name="name">The name of the logger, used in the log files and terminal.</param>
-    /// <param name="filePath">The file path to the log file (required when <see cref="Options.shouldWriteToFile"/> is on).</param>
     /// <param name="severity">The log level of this logger.</param>
-    /// <param name="terminalOut">The output stream to the terminal (default: <see cref="Console.Out"/>).</param>
-    /// <param name="options">The options for logging.</param>
     /// <exception cref="ArgumentException"/>
-    public Logger(string id, string name, string filePath = "./logs/latest.log", Severity severity = Severity.Info, Options? options = null, TextWriter? terminalOut = null) {
+    public Logger(string id, string name, Severity severity = Severity.Info, Dictionary<string, ITarget>? targets = null) {
         ID = id;
         Name = name;
-        Out = terminalOut ?? Console.Out;
         logLevel = severity;
-        this.options = options ?? new();
-        if (this.options.shouldWriteToFile) {
-            FileOut = new StreamWriter(File.OpenWrite(Path.GetFullPath(filePath)));
-        }
+        Targets = (targets ?? new Dictionary<string, ITarget>{{nameof(TerminalTarget), new TerminalTarget()}, {nameof(FileTarget),new FileTarget()}}).Select(target => new KeyValuePair<string, (ITarget, bool)>(target.Key, (target.Value, true))).ToDictionary();
         if (!Loggers.Register(this)) {
             throw new ArgumentException("A logger with this ID has already been registered.", nameof(id));
         }
-    }
-    /// <summary>
-    /// Changes the file to write to.
-    /// </summary>
-    /// <param name="filePath">The file path.</param>
-    public void SetFile(string filePath) {
-        FileOut = new StreamWriter(File.OpenWrite(Path.GetFullPath(filePath)));
     }
     /// <summary>
     /// Sets the log level.
@@ -107,7 +88,7 @@ public class Logger : IDisposable {
     /// </summary>
     /// <param name="severity">The severity for the color.</param>
     /// <returns></returns>
-    protected static string GetColor(Severity severity) {
+    public static string GetColor(Severity severity) {
         if (severity == Severity.Fatal) {
             return new Color(255, 0, 0).ToForegroundANSI();
         } else if (severity == Severity.Error) {
@@ -138,7 +119,7 @@ public class Logger : IDisposable {
             Out.WriteLine(GetColor(severity)+"["+Name+"]["+time+"]["+ANSI.Styles.Bold+severity.ToString()+ANSI.Styles.ResetBold+"]: "+text?.ToString()+ANSI.Styles.ResetAll);
         }
         if (options.shouldWriteToFile && FileOut != null) {
-            FileOut.WriteLine("["+Name+"]["+time+"]["+severity.ToString()+"]: "+text?.ToString());
+            
         }
     }
     /// <summary>
@@ -211,7 +192,6 @@ public class Logger : IDisposable {
 /// Represents a target for logger outputs.
 /// </summary>
 public interface ITarget : IDisposable {
-    public bool enabled;
     /// <summary>
     /// The method to write to output
     /// </summary>
@@ -222,4 +202,29 @@ public interface ITarget : IDisposable {
     /// <param name="ID">The ID of the logger.</param>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
     public void Write<T>(Severity severity, DateTime time, string name, string ID, T? text);
+}
+public class TerminalTarget : ITarget
+{
+    public void Dispose() {
+        GC.SuppressFinalize(this);
+    }
+
+    public void Write<T>(Severity severity, DateTime time, string name, string ID, T? text) {
+        
+    }
+}
+public class FileTarget : ITarget
+{
+    public FileStream FileOut;
+    public FileTarget(string path) {
+        FileOut = File.OpenWrite(path).;
+    }
+    public void Dispose() {
+        FileOut.Close();
+        GC.SuppressFinalize(this);
+    }
+
+    public void Write<T>(Severity severity, DateTime time, string name, string ID, T? text) {
+        FileOut.WriteLine("["+Name+"]["+time+"]["+severity.ToString()+"]: "+text?.ToString());
+    }
 }
