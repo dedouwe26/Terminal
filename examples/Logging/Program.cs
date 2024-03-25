@@ -2,7 +2,7 @@
 
 class Program {
     public const string LoggerID = "me.0xDED.Terminal.examples";
-    public static Logger logger = new(LoggerID, "Logging Example", "./latest.log", Severity.Trace);
+    public static Logger logger = new(LoggerID, "Logging Example", Severity.Trace);
     public static void Main() {
         logger.LogMessage("Hello, world!");
         logger.LogInfo("This is the start of the program!");

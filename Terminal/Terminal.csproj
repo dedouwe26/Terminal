@@ -9,7 +9,10 @@
     <Authors>0xDED</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>Terminal;library;console;logging;keyboard;ansi</PackageTags>
     <PackageDescription>Terminal is a C# library for managing everything in the terminal, it's an alternative of Console, and it can be used for tui applications. It also supports logging.</PackageDescription>
+    <RepositoryUrl>https://github.com/dedouwe26/Terminal.git</RepositoryUrl> 
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="\"/>

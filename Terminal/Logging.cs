@@ -58,7 +58,7 @@ public class Logger : IDisposable {
     /// <summary>
     /// All the targets, key MUST BE nameof(...Target).
     /// </summary>
-    public Dictionary<string, (ITarget target, bool enabled)> Targets;
+    public Dictionary<Type, (ITarget target, bool enabled)> Targets;
     public Severity logLevel = Severity.Info;
     /// <summary>
     /// Creates a logger.
@@ -66,12 +66,13 @@ public class Logger : IDisposable {
     /// <param name="id">The ID to identify this logger, like 'me.0xDED.MyProject' (if this ID is already registered it will throw an <see cref="ArgumentException"/> error).</param>
     /// <param name="name">The name of the logger, used in the log files and terminal.</param>
     /// <param name="severity">The log level of this logger.</param>
+    /// <param name="targets">The targets to add and enable (default: <see cref="TerminalTarget"/>, <see cref="FileTarget"/> with path ").</param>
     /// <exception cref="ArgumentException"/>
-    public Logger(string id, string name, Severity severity = Severity.Info, Dictionary<string, ITarget>? targets = null) {
+    public Logger(string id, string name, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
         ID = id;
         Name = name;
         logLevel = severity;
-        Targets = (targets ?? new Dictionary<string, ITarget>{{nameof(TerminalTarget), new TerminalTarget()}, {nameof(FileTarget),new FileTarget()}}).Select(target => new KeyValuePair<string, (ITarget, bool)>(target.Key, (target.Value, true))).ToDictionary();
+        Targets = targets != null ? targets.Select(target => new KeyValuePair<Type, (ITarget, bool)>(target.Key, (target.Value, true))).ToDictionary() : new Dictionary<Type, (ITarget, bool enabled)>{{typeof(FileTarget), (new TerminalTarget(), true)}, {typeof(FileTarget), (new FileTarget("./latest.log"), true)}};
         if (!Loggers.Register(this)) {
             throw new ArgumentException("A logger with this ID has already been registered.", nameof(id));
         }
@@ -83,8 +84,38 @@ public class Logger : IDisposable {
     public void SetLevel(Severity maxSeverity) {
         logLevel = maxSeverity;
     }
-    public bool SetTarget(string nameOf, bool enabled) {
-        Targets.Set(nameOf, Targets.Get(nameOf).enabled =
+
+    /// <summary>
+    /// Sets if a target is enabled.
+    /// </summary>
+    /// <param name="type">The type of the Target.</param>
+    /// <param name="enabled">True if enabled.</param>
+    /// <returns>True if there is a Target with that type.</returns>
+    public bool SetTarget(Type type, bool enabled) {
+        if (Targets.TryGetValue(type, out (ITarget target, bool enabled) value)) {
+            value.enabled = enabled;
+            Targets[type] = value;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Adds a target.
+    /// </summary>
+    /// <param name="target">The target to add.</param>
+    /// <param name="enabled">If it is enabled.</param>
+    public void AddTarget(ITarget target, bool enabled = true) {
+        Targets.Add(target.GetType(), (target, enabled));
+    }
+    /// <summary>
+    /// Removes a Target.
+    /// </summary>
+    /// <param name="type">The type of the target</param>
+    /// <returns>True if there was a target with that type.</returns>
+    public bool RemoveTarget(Type type) {
+        return Targets.Remove(type);
+    }
     /// <summary>
     /// Returns the ANSI color corresponding to the severity.
     /// </summary>
@@ -115,11 +146,11 @@ public class Logger : IDisposable {
     /// <param name="severity">The severity of the text.</param>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
     public void Log<T>(Severity severity, T? text) {
-        if (((byte)severity) > ((byte)logLevel)) { return; 
+        if (((byte)severity) > ((byte)logLevel)) { return; }
         DateTime time = DateTime.Now;
-        foreach ((ITarget target, bool enabled) target in Targets) {
-            if (target.enabled) {
-                target.target.Write(severity, time, this, text);
+        foreach (KeyValuePair<Type, (ITarget target, bool enabled)> target in Targets) {
+            if (target.Value.enabled) {
+                target.Value.target.Write(severity, time, this, text);
             }
         }
     }
@@ -184,8 +215,8 @@ public class Logger : IDisposable {
     /// </summary>
     public void Dispose() {
         Loggers.UnRegister(this);
-        foreach ((ITarget target, bool enabled) target in Targets) {
-            target.target.Dispose();
+        foreach (KeyValuePair<Type, (ITarget target, bool enabled)> target in Targets) {
+            target.Value.target.Dispose();
         }
         GC.SuppressFinalize(this);
     }
@@ -196,7 +227,7 @@ public class Logger : IDisposable {
 /// </summary>
 public interface ITarget : IDisposable {
     /// <summary>
-    /// The method to write to output
+    /// The method to write to output.
     /// </summary>
     /// <typeparam name="T">The type of the text.</typeparam>
     /// <param name="severity">The severity of the message.</param>
@@ -205,31 +236,37 @@ public interface ITarget : IDisposable {
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
     public void Write<T>(Severity severity, DateTime time, Logger logger, T? text);
 }
+/// <summary>
+/// A Target for the terminal.
+/// </summary>
 public class TerminalTarget : ITarget {
+    /// <summary>
+    /// The out stream to the terminal.
+    /// </summary>
     public TextWriter Out;
     public TerminalTarget(TextWriter? terminalOut = null) {
-        Out = (terminalOut ?? Terminal.Out);
+        Out = terminalOut ?? Terminal.Out;
     }
     public void Dispose() {
         GC.SuppressFinalize(this);
     }
 
-    public void Write<T>(Severity severity, DateTime time, string name, string ID, T? text) {
-        Out.WriteLine(Logger.GetColor(severity)+"["+Name+"]["+time.ToString()+"]["+ANSI.Styles.Bold+severity.ToString()+ANSI.Styles.ResetBold+"]: "+text?.ToString()+ANSI.Styles.ResetAll);
+    public void Write<T>(Severity severity, DateTime time, Logger logger, T? text) {
+        Out.WriteLine(Logger.GetColor(severity)+"["+logger.Name+"]["+time.ToString()+"]["+ANSI.Styles.Bold+severity.ToString()+ANSI.Styles.ResetBold+"]: "+text?.ToString()+ANSI.Styles.ResetAll);
     }
 }
 public class FileTarget : ITarget
 {
-    public FileStream FileOut;
+    public TextWriter FileOut;
     public FileTarget(string path) {
-        FileOut = File.OpenWrite(path).;
+        FileOut = new StreamWriter(File.OpenWrite(path));
     }
     public void Dispose() {
         FileOut.Close();
         GC.SuppressFinalize(this);
     }
 
-    public void Write<T>(Severity severity, DateTime time, string name, string ID, T? text) {
-        FileOut.WriteLine("["+Name+"]["+time+"]["+severity.ToString()+"]: "+text?.ToString());
+    public void Write<T>(Severity severity, DateTime time, Logger logger, T? text) {
+        FileOut.WriteLine("["+logger.Name+"]["+time+"]["+severity.ToString()+"]: "+text?.ToString());
     }
 }
