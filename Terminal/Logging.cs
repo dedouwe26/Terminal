@@ -83,6 +83,8 @@ public class Logger : IDisposable {
     public void SetLevel(Severity maxSeverity) {
         logLevel = maxSeverity;
     }
+    public bool SetTarget(string nameOf, bool enabled) {
+        Targets.Set(nameOf, Targets.Get(nameOf).enabled =
     /// <summary>
     /// Returns the ANSI color corresponding to the severity.
     /// </summary>
@@ -113,13 +115,12 @@ public class Logger : IDisposable {
     /// <param name="severity">The severity of the text.</param>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
     public void Log<T>(Severity severity, T? text) {
-        if (((byte)severity) > ((byte)logLevel)) { return; }
-        string time = DateTime.Now.ToString();
-        if (options.shouldWriteToTerminal) {
-            Out.WriteLine(GetColor(severity)+"["+Name+"]["+time+"]["+ANSI.Styles.Bold+severity.ToString()+ANSI.Styles.ResetBold+"]: "+text?.ToString()+ANSI.Styles.ResetAll);
-        }
-        if (options.shouldWriteToFile && FileOut != null) {
-            
+        if (((byte)severity) > ((byte)logLevel)) { return; 
+        DateTime time = DateTime.Now;
+        foreach ((ITarget target, bool enabled) target in Targets) {
+            if (target.enabled) {
+                target.target.Write(severity, time, this, text);
+            }
         }
     }
     /// <summary>
@@ -179,11 +180,13 @@ public class Logger : IDisposable {
         Log(Severity.Trace, text);
     }
     /// <summary>
-    /// Closes / saves the log file, and unregisters this logger.
+    /// Disposes all targets, and unregisters this logger.
     /// </summary>
     public void Dispose() {
         Loggers.UnRegister(this);
-        FileOut?.Close();
+        foreach ((ITarget target, bool enabled) target in Targets) {
+            target.target.Dispose();
+        }
         GC.SuppressFinalize(this);
     }
 }
@@ -198,19 +201,21 @@ public interface ITarget : IDisposable {
     /// <typeparam name="T">The type of the text.</typeparam>
     /// <param name="severity">The severity of the message.</param>
     /// <param name="time">The time when it has been logged.</param>
-    /// <param name="name">The name of the logger.</param>
-    /// <param name="ID">The ID of the logger.</param>
+    /// <param name="logger">The logger.</param>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void Write<T>(Severity severity, DateTime time, string name, string ID, T? text);
+    public void Write<T>(Severity severity, DateTime time, Logger logger, T? text);
 }
-public class TerminalTarget : ITarget
-{
+public class TerminalTarget : ITarget {
+    public TextWriter Out;
+    public TerminalTarget(TextWriter? terminalOut = null) {
+        Out = (terminalOut ?? Terminal.Out);
+    }
     public void Dispose() {
         GC.SuppressFinalize(this);
     }
 
     public void Write<T>(Severity severity, DateTime time, string name, string ID, T? text) {
-        
+        Out.WriteLine(Logger.GetColor(severity)+"["+Name+"]["+time.ToString()+"]["+ANSI.Styles.Bold+severity.ToString()+ANSI.Styles.ResetBold+"]: "+text?.ToString()+ANSI.Styles.ResetAll);
     }
 }
 public class FileTarget : ITarget
