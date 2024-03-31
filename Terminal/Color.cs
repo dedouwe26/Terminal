@@ -5,13 +5,37 @@ namespace OxDEDTerm;
 /// These are TERMINAL-DEFINED colors.
 /// </summary>
 public enum Colors : byte {
+    /// <summary>
+    /// 
+    /// </summary>
     Black = 30,
+    /// <summary>
+    /// 
+    /// </summary>
     Red = 31,
+    /// <summary>
+    /// 
+    /// </summary>
     Green = 32,
+    /// <summary>
+    /// 
+    /// </summary>
     Yellow = 33,
+    /// <summary>
+    /// 
+    /// </summary>
     Blue = 34,
+    /// <summary>
+    /// 
+    /// </summary>
     Magenta = 35,
+    /// <summary>
+    /// 
+    /// </summary>
     Cyan = 36,
+    /// <summary>
+    /// 
+    /// </summary>
     White = 37,
     
     /// <summary>
@@ -52,6 +76,10 @@ public enum Colors : byte {
     /// </summary>
     Default = 39,
 }
+
+/// <summary>
+/// Represents a color for a terminal.
+/// </summary>
 public class Color {
     /// <summary>
     /// The 8-bit (generated) table color.
@@ -65,8 +93,17 @@ public class Color {
     /// 24-bit True color.
     /// </summary>
     public (byte r, byte g, byte b)? trueColor = null;
+    /// <summary>
+    /// If it is a true color.
+    /// </summary>
     public bool HasTrueColor {get { return (!(tableColor.HasValue && paletteColor.HasValue))&&trueColor.HasValue; }}
+    /// <summary>
+    /// If it is a palette color.
+    /// </summary>
     public bool HasPaletteColor {get { return (!(tableColor.HasValue && trueColor.HasValue))&&paletteColor.HasValue; }}
+    /// <summary>
+    /// If it is a table color.
+    /// </summary>
     public bool HasTableColor {get { return (!(paletteColor.HasValue && trueColor.HasValue))&&tableColor.HasValue; }}
     
     /// <summary>
@@ -140,19 +177,57 @@ public class Color {
     /// 255, 0, 0
     /// </summary>
     public static readonly Color Red = new(255, 0, 0);
+    /// <summary>
+    /// 0, 255, 0
+    /// </summary>
     public static readonly Color Green = new(0, 255, 0);
+    /// <summary>
+    /// 0, 0, 255
+    /// </summary>
     public static readonly Color Blue = new(0, 0, 255);
+    /// <summary>
+    /// 255, 80, 80
+    /// </summary>
     public static readonly Color LightRed = new(255, 80, 80);
+    /// <summary>
+    /// 30, 190, 30
+    /// </summary>
     public static readonly Color DarkGreen = new(30, 190, 30);
+    /// <summary>
+    /// 30, 30, 190
+    /// </summary>
     public static readonly Color DarkBlue = new(30, 30, 190);
+    /// <summary>
+    /// 255, 255, 0
+    /// </summary>
     public static readonly Color Yellow = new(255, 255, 0);
+    /// <summary>
+    /// 255, 160, 0
+    /// </summary>
     public static readonly Color Orange = new(255, 160, 0);
+    /// <summary>
+    /// 180, 180, 180
+    /// </summary>
     public static readonly Color Gray = new(180, 180, 180);
+    /// <summary>
+    /// 0, 0, 0
+    /// </summary>
     public static readonly Color Black = new(0, 0, 0);
+    /// <summary>
+    /// 255, 255, 255
+    /// </summary>
     public static readonly Color White = new(255, 255, 255);
-
+    /// <summary>
+    /// 
+    /// </summary>
     public static implicit operator Color(Colors color) { return new(color); }
+    /// <summary>
+    /// 
+    /// </summary>
     public static explicit operator Colors?(Color color) {  return color.paletteColor; }
+    /// <summary>
+    /// 
+    /// </summary>
     public static explicit operator Colors(Color color) {
         if (color.HasPaletteColor&&color.paletteColor.HasValue) { return color.paletteColor.Value; }
         throw new Exception("No palette color.");

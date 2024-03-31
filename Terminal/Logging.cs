@@ -1,12 +1,10 @@
-using System.Reflection.Metadata.Ecma335;
-
 namespace OxDEDTerm;
 
 /// <summary>
 /// A register for all loggers.
 /// </summary>
 public static class Loggers {
-    public static readonly Dictionary<string, Logger> registeredLoggers = [];
+    private static readonly Dictionary<string, Logger> registeredLoggers = [];
     /// <summary>
     /// Registers a logger.
     /// </summary>
@@ -40,12 +38,33 @@ public static class Loggers {
 /// Logger severity.
 /// </summary>
 public enum Severity : byte {
+    /// <summary>
+    /// 
+    /// </summary>
     Fatal,
+    /// <summary>
+    /// 
+    /// </summary>
     Error,
+    /// <summary>
+    /// 
+    /// </summary>
     Warning,
+    /// <summary>
+    /// 
+    /// </summary>
     Message,
+    /// <summary>
+    /// 
+    /// </summary>
     Info,
+    /// <summary>
+    /// 
+    /// </summary>
     Debug,
+    /// <summary>
+    /// 
+    /// </summary>
     Trace
 }
 
@@ -53,12 +72,21 @@ public enum Severity : byte {
 /// Represents a logger for the terminal and log files.
 /// </summary>
 public class Logger : IDisposable {
+    /// <summary>
+    /// 
+    /// </summary>
     public string ID;
+    /// <summary>
+    /// 
+    /// </summary>
     public string Name;
     /// <summary>
     /// All the targets, key MUST BE nameof(...Target).
     /// </summary>
     public Dictionary<Type, (ITarget target, bool enabled)> Targets;
+    /// <summary>
+    /// The current log severity max.
+    /// </summary>
     public Severity logLevel = Severity.Info;
     /// <summary>
     /// Creates a logger.
@@ -244,28 +272,48 @@ public class TerminalTarget : ITarget {
     /// The out stream to the terminal.
     /// </summary>
     public TextWriter Out;
+    /// <summary>
+    /// Creates a target that targets the terminal.
+    /// </summary>
+    /// <param name="terminalOut">The out stream (default: <see cref="Terminal.Out"/>).</param>
     public TerminalTarget(TextWriter? terminalOut = null) {
         Out = terminalOut ?? Terminal.Out;
     }
+    /// <inheritdoc/>
     public void Dispose() {
         GC.SuppressFinalize(this);
     }
 
+    /// <inheritdoc/>
     public void Write<T>(Severity severity, DateTime time, Logger logger, T? text) {
         Out.WriteLine(Logger.GetColor(severity)+"["+logger.Name+"]["+time.ToString()+"]["+ANSI.Styles.Bold+severity.ToString()+ANSI.Styles.ResetBold+"]: "+text?.ToString()+ANSI.Styles.ResetAll);
     }
 }
+
+/// <summary>
+/// A Target for a log file.
+/// </summary>
 public class FileTarget : ITarget
 {
+    /// <summary>
+    /// The output stream to the file.
+    /// </summary>
     public TextWriter FileOut;
+
+    /// <summary>
+    /// Creates a target that targets a log file.
+    /// </summary>
+    /// <param name="path">The path to the log file (file doesn't need to exist).</param>
     public FileTarget(string path) {
         FileOut = new StreamWriter(File.OpenWrite(path));
     }
+    /// <inheritdoc/>
     public void Dispose() {
         FileOut.Close();
         GC.SuppressFinalize(this);
     }
 
+    /// <inheritdoc/>
     public void Write<T>(Severity severity, DateTime time, Logger logger, T? text) {
         FileOut.WriteLine("["+logger.Name+"]["+time+"]["+severity.ToString()+"]: "+text?.ToString());
     }

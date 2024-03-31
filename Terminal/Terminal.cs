@@ -2,8 +2,19 @@
 
 namespace OxDEDTerm;
 
+/// <summary>
+/// An delegate for the key press event.
+/// </summary>
+/// <param name="key">The key that is pressed.</param>
+/// <param name="keyChar">The corresponding char of the key (shift is used).</param>
+/// <param name="alt">If the alt key was pressed.</param>
+/// <param name="shift">If the shift key was pressed.</param>
+/// <param name="control">If the control key was pressed.</param>
 public delegate void OnKeyPress(ConsoleKey key, char keyChar, bool alt, bool shift, bool control);
 
+/// <summary>
+/// Handles all the terminal stuff.
+/// </summary>
 public static class Terminal {
     static Terminal() {
         OutEncoding = Encoding.UTF8;

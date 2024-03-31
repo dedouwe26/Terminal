@@ -1,12 +1,33 @@
 namespace OxDEDTerm;
 
+/// <summary>
+/// Contains all the ANSI codes.
+/// </summary>
 public static class ANSI {
+    /// <summary>
+    /// (1B)
+    /// </summary>
     public const string ESC = "\x1B";
+    /// <summary>
+    /// CSI
+    /// </summary>
     public const string CSI = ESC+"[";
     
+    /// <summary>
+    /// 
+    /// </summary>
     public const string EraseScreen = CSI+"2J";
+    /// <summary>
+    /// 
+    /// </summary>
     public const string EraseScreenFromCursor = CSI+"0J";
+    /// <summary>
+    /// 
+    /// </summary>
     public const string EraseLine = CSI+"2K";
+    /// <summary>
+    /// 
+    /// </summary>
     public const string EraseLineFromCursor = CSI+"0K";
     /// <summary>
     /// Will return as CSI{row};{column}R <para/>
@@ -15,9 +36,18 @@ public static class ANSI {
     /// {column} is the column.
     /// </summary>
     public const string RequestCursorPosition = CSI+"6n";
+    /// <summary>
+    /// 
+    /// </summary>
     public const string CursorInvisible = CSI+"?25l";
+    /// <summary>
+    /// 
+    /// </summary>
     public const string CursorVisible = CSI+"?25h";
 
+    /// <summary>
+    /// Contains all the ANSI codes for text decoration (excluding colors).
+    /// </summary>
     public static class Styles {
         /// <summary>
         /// Resets all text decoration, including colors.
@@ -43,57 +73,128 @@ public static class ANSI {
         /// </summary>
         public const string ResetFaint = CSI+"22m";
 
+        /// <summary>
+        /// 
+        /// </summary>
         public const string Italic = CSI+"3m";
+        /// <summary>
+        /// 
+        /// </summary>
         public const string ResetItalic = CSI+"23m";
 
+        /// <summary>
+        /// 
+        /// </summary>
         public const string Underline = CSI+"4m";
+        /// <summary>
+        /// 
+        /// </summary>
         public const string ResetUnderline = CSI+"24m";
 
+        /// <summary>
+        /// 
+        /// </summary>
         public const string Blink = CSI+"5m";
+        /// <summary>
+        /// 
+        /// </summary>
         public const string ResetBlink = CSI+"25m";
         
         /// <summary>
         /// Inverse / reverse.
         /// </summary>
         public const string Inverse = CSI+"7m";
+        /// <summary>
+        /// 
+        /// </summary>
         public const string ResetInverse = CSI+"27m";
 
         /// <summary>
         /// Invisible / hidden.
         /// </summary>
         public const string Invisible = CSI+"8m";
+        /// <summary>
+        /// 
+        /// </summary>
         public const string ResetInvisible = CSI+"28m";
 
         /// <summary>
         /// Striketrough / linetrough.
         /// </summary>
         public const string Striketrough = CSI+"9m";
+        /// <summary>
+        /// 
+        /// </summary>
         public const string ResetStriketrough = CSI+"29m";
 
         /// <summary>
         /// non-specified, may only work in some terminals.
         /// </summary>
         public const string DoubleUnderLine = CSI+"21m";
+        /// <summary>
+        /// 
+        /// </summary>
         public const string ResetDoubleUnderLine = CSI+"24m";
     }
+    /// <summary>
+    /// Generates an ANSI code for moving the cursor.
+    /// </summary>
+    /// <param name="x">The x pos.</param>
+    /// <param name="y">The y pos.</param>
+    /// <returns>The ANSI code.</returns>
     public static string MoveCursor(int x, int y) {
         return CSI+y.ToString()+";"+x.ToString()+"H";
     }
+    /// <summary>
+    /// Generates an ANSI code for setting the foreground color.
+    /// </summary>
+    /// <param name="color">basic set index.</param>
+    /// <returns>The ANSI code.</returns>
     public static string BasicSetForegroundColor(byte color) {
         return CSI+color.ToString()+"m";
     }
+    /// <summary>
+    /// Generates an ANSI code for setting the background color.
+    /// </summary>
+    /// <param name="color">basic set index.</param>
+    /// <returns>The ANSI code.</returns>
     public static string BasicSetBackgroundColor(byte color) {
         return CSI+(color+10).ToString()+"m";
     }
+    /// <summary>
+    /// Generates an ANSI code for setting the background color.
+    /// </summary>
+    /// <param name="color">table index.</param>
+    /// <returns>The ANSI code.</returns>
     public static string TableBackgroundColor(byte color) {
         return CSI+"48;5;"+color.ToString()+"m";
     }
+    /// <summary>
+    /// Generates an ANSI code for setting the foreground color.
+    /// </summary>
+    /// <param name="color">table index.</param>
+    /// <returns>The ANSI code.</returns>
     public static string TableForegroundColor(byte color) {
         return CSI+"38;5;"+color.ToString()+"m";
     }
+    
+    /// <summary>
+    /// Generates an ANSI code for setting the foreground color.
+    /// </summary>
+    /// <param name="r">R value.</param>
+    /// <param name="g">G value.</param>
+    /// <param name="b">B value.</param>
+    /// <returns>The ANSI code.</returns>
     public static string ForegroundTrueColor(byte r, byte g, byte b) {
         return CSI+"38;2;"+r.ToString()+";"+g.ToString()+";"+b.ToString()+"m";
     }
+    /// <summary>
+    /// Generates an ANSI code for setting the background color.
+    /// </summary>
+    /// <param name="r">R value.</param>
+    /// <param name="g">G value.</param>
+    /// <param name="b">B value.</param>
+    /// <returns>The ANSI code.</returns>
     public static string BackgroundTrueColor(byte r, byte g, byte b) {
         return CSI+"48;2;"+r.ToString()+";"+g.ToString()+";"+b.ToString()+"m";
     }
