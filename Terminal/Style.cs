@@ -38,7 +38,7 @@ public struct Style {
     /// <summary>
     /// May only work in some terminals.
     /// </summary>
-    public bool DoubleUnderLine = false;
+    public bool DoubleUnderline = false;
 
     /// <summary>
     /// The text color.
@@ -58,17 +58,19 @@ public struct Style {
     /// Creates an ANSI coded string for the chosen decorations.
     /// </summary>
     /// <returns>The ANSI string.</returns>
-    public string ToANSI() {
+    public readonly string ToANSI() {
         return 
-            (Bold ? ANSI.Styles.Bold : ANSI.Styles.ResetBold) +
-            (Faint ? ANSI.Styles.Faint : (Bold ? ANSI.Styles.ResetFaint : "")) +
+            (Bold ? ANSI.Styles.Bold : "") +
+            (Faint ? ANSI.Styles.Faint : "") +
+            ((!(Bold||Faint)) ? ANSI.Styles.ResetBold : "")+
             (Italic ? ANSI.Styles.Italic : ANSI.Styles.ResetItalic) +
-            (Underline ? ANSI.Styles.Underline : ANSI.Styles.ResetUnderline) +
+            (Underline ? ANSI.Styles.Underline : "") +
             (Blink ? ANSI.Styles.Blink : ANSI.Styles.ResetBlink) +
             (Inverse ? ANSI.Styles.Inverse : ANSI.Styles.ResetInverse) +
             (Invisible ? ANSI.Styles.Invisible : ANSI.Styles.ResetInvisible) +
             (Striketrough ? ANSI.Styles.Striketrough : ANSI.Styles.ResetStriketrough) +
-            (DoubleUnderLine ? ANSI.Styles.DoubleUnderLine : ANSI.Styles.ResetDoubleUnderLine) +
+            (DoubleUnderline ? ANSI.Styles.DoubleUnderline : "") +
+            ((!(Underline||DoubleUnderline)) ? ANSI.Styles.ResetUnderline : "") +
             backgroundColor.ToBackgroundANSI() + foregroundColor.ToForegroundANSI();
     }
 }

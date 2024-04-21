@@ -83,11 +83,11 @@ public static class ANSI {
         public const string ResetItalic = CSI+"23m";
 
         /// <summary>
-        /// 
+        /// Underlined, interferes with <see cref="DoubleUnderline"/>.
         /// </summary>
         public const string Underline = CSI+"4m";
         /// <summary>
-        /// 
+        /// Resets <see cref="Underline"/> or <see cref="DoubleUnderline"/>.
         /// </summary>
         public const string ResetUnderline = CSI+"24m";
 
@@ -129,12 +129,13 @@ public static class ANSI {
 
         /// <summary>
         /// non-specified, may only work in some terminals.
+        /// Interferes with <see cref="Underline"/>.
         /// </summary>
-        public const string DoubleUnderLine = CSI+"21m";
+        public const string DoubleUnderline = CSI+"21m";
         /// <summary>
-        /// 
+        /// Resets <see cref="DoubleUnderline"/> or <see cref="Underline"/>.
         /// </summary>
-        public const string ResetDoubleUnderLine = CSI+"24m";
+        public const string ResetDoubleUnderline = CSI+"24m";
     }
     /// <summary>
     /// Generates an ANSI code for moving the cursor.

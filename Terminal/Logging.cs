@@ -16,7 +16,7 @@ public static class Loggers {
         return true;
     }
     /// <summary>
-    /// Unregisters a logger
+    /// Unregisters a logger.
     /// </summary>
     /// <param name="logger">The logger to unregister.</param>
     /// <returns>True if it was successful, false if there is no logger with that ID.</returns>
@@ -81,7 +81,7 @@ public class Logger : IDisposable {
     /// </summary>
     public string Name;
     /// <summary>
-    /// All the targets, key MUST BE nameof(...Target).
+    /// All the targets, key MUST BE typeof(...Target) or ITarget.GetType() only when using .
     /// </summary>
     public Dictionary<Type, (ITarget target, bool enabled)> Targets;
     /// <summary>
@@ -94,7 +94,7 @@ public class Logger : IDisposable {
     /// <param name="id">The ID to identify this logger, like 'me.0xDED.MyProject' (if this ID is already registered it will throw an <see cref="ArgumentException"/> error).</param>
     /// <param name="name">The name of the logger, used in the log files and terminal.</param>
     /// <param name="severity">The log level of this logger.</param>
-    /// <param name="targets">The targets to add and enable (default: <see cref="TerminalTarget"/>, <see cref="FileTarget"/> with path ").</param>
+    /// <param name="targets">The targets to add and enable (default: <see cref="TerminalTarget"/>, <see cref="FileTarget"/> with path "./latest.log").</param>
     /// <exception cref="ArgumentException"/>
     public Logger(string id, string name, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
         ID = id;
@@ -116,7 +116,17 @@ public class Logger : IDisposable {
     /// <summary>
     /// Sets if a target is enabled.
     /// </summary>
-    /// <param name="type">The type of the Target.</param>
+    /// <typeparam name="T">The type of the Target (e.g. TerminalTarget).</typeparam>
+    /// <param name="enabled">True if enabled.</param>
+    /// <returns>True if there is a Target with that type.</returns>
+    public bool SetTarget<T>(bool enabled) where T : ITarget {
+        return SetTarget(typeof(T), enabled);
+    }
+
+    /// <summary>
+    /// Sets if a target is enabled.
+    /// </summary>
+    /// <param name="type">The type of the Target (e.g. typeof(TerminalTarget)).</param>
     /// <param name="enabled">True if enabled.</param>
     /// <returns>True if there is a Target with that type.</returns>
     public bool SetTarget(Type type, bool enabled) {
@@ -131,11 +141,21 @@ public class Logger : IDisposable {
     /// <summary>
     /// Adds a target.
     /// </summary>
-    /// <param name="target">The target to add.</param>
+    /// <param name="target">The target to add (e.g. typeof(TerminalTarget)).</param>
     /// <param name="enabled">If it is enabled.</param>
     public void AddTarget(ITarget target, bool enabled = true) {
         Targets.Add(target.GetType(), (target, enabled));
     }
+
+    /// <summary>
+    /// Removes a Target.
+    /// </summary>
+    /// <typeparam name="T">The type of the target</typeparam>
+    /// <returns>True if there was a target with that type.</returns>
+    public bool RemoveTarget<T>() where T : ITarget {
+        return RemoveTarget(typeof(T));
+    }
+
     /// <summary>
     /// Removes a Target.
     /// </summary>
@@ -265,7 +285,7 @@ public interface ITarget : IDisposable {
     public void Write<T>(Severity severity, DateTime time, Logger logger, T? text);
 }
 /// <summary>
-/// A Target for the terminal.
+/// A Logger Target for the terminal.
 /// </summary>
 public class TerminalTarget : ITarget {
     /// <summary>
@@ -291,7 +311,7 @@ public class TerminalTarget : ITarget {
 }
 
 /// <summary>
-/// A Target for a log file.
+/// A Logger Target for a log file.
 /// </summary>
 public class FileTarget : ITarget
 {
