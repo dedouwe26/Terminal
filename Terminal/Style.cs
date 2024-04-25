@@ -1,4 +1,4 @@
-namespace OxDEDTerm;
+namespace OxDED.Terminal;
 
 /// <summary>
 /// Contains the style decorations.

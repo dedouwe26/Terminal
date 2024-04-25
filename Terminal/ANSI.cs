@@ -1,4 +1,4 @@
-namespace OxDEDTerm;
+namespace OxDED.Terminal;
 
 /// <summary>
 /// Contains all the ANSI codes.

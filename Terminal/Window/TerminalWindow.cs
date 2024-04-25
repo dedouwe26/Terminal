@@ -1,104 +1,61 @@
-﻿using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
-using OxDED.Terminal.Logging;
-using OxDED.Terminal.Window;
 
-namespace OxDED.Terminal;
+namespace OxDED.Terminal.Window;
 
 /// <summary>
-/// An delegate for the key press event.
+/// Represents a terminal window that can be used.
 /// </summary>
-/// <param name="key">The key that is pressed.</param>
-/// <param name="keyChar">The corresponding char of the key (shift is used).</param>
-/// <param name="alt">If the alt key was pressed.</param>
-/// <param name="shift">If the shift key was pressed.</param>
-/// <param name="control">If the control key was pressed.</param>
-public delegate void KeyPressCallback(ConsoleKey key, char keyChar, bool alt, bool shift, bool control);
-
-/// <summary>
-/// Handles all the terminal stuff.
-/// </summary>
-public static class Terminal {
-    static Terminal() {
-        OutEncoding = Encoding.UTF8;
-        InEncoding = Encoding.UTF8;
-        Console.CancelKeyPress+=(sender, e)=>{
-            e.Cancel = blockCancelKey;
-        };
+public abstract class TerminalWindow : IDisposable {
+    /// <summary>
+    /// Sets default values.
+    /// </summary>
+    protected TerminalWindow() {
+        IsDisposed = true;
     }
-    private static Thread? listenForKeysThread;
-    private static bool listenForKeys = false;
+
     /// <summary>
-    /// If it should listen for keys.
+    /// The title of the Terminal window.
     /// </summary>
-    public static bool ListenForKeys {set {
-        if (value && (!listenForKeys)) {
-            listenForKeys = value;
-            listenForKeysThread = new Thread(ListenForKeysMethod);
-            listenForKeysThread.Start();
-        } else {
-            listenForKeys = value;
-        }
-    } get {
-        return listenForKeys;
-    }}
-    /// <summary>
-    /// If it should block CTRL + C.
-    /// </summary>
-    public static bool blockCancelKey = false;
+    public abstract string Title { get; set;}
     /// <summary>
     /// The out (to terminal) stream.
     /// </summary>
-    public static TextWriter Out {get { return Console.Out; } set { Console.SetOut(value); }}
+    public abstract TextWriter Out {get;}
     /// <summary>
     /// The in (from terminal) stream.
     /// </summary>
-    public static TextReader In {get { return Console.In; } set { Console.SetIn(value); }}
+    public abstract TextReader In {get;}
     /// <summary>
     /// The error (to terminal) stream.
     /// </summary>
-    public static TextWriter Error {get { return Console.Error; } set { Console.SetError(value); }}
+    public abstract TextWriter Error {get;}
     /// <summary>
     /// Hides or shows terminal cursor.
     /// </summary>
-    public static bool HideCursor {set { Out.Write(value ? ANSI.CursorInvisible : ANSI.CursorVisible); }}
+    public abstract bool HideCursor {get; set;}
     /// <summary>
     /// The width (in characters) of the terminal.
     /// </summary>
-    public static uint Width {get { return (uint)Console.WindowWidth; }}
+    public abstract int Width {get;}
     /// <summary>
     /// The height (in characters) of the terminal.
     /// </summary>
-    public static uint Height {get { return (uint)Console.WindowHeight; }}
+    public abstract int Height {get;}
     /// <summary>
     /// The encoding used for the in stream (default: UTF-8).
     /// </summary>
-    public static Encoding InEncoding {get { return Console.InputEncoding; } set {Console.InputEncoding = value; }}
+    public abstract Encoding InEncoding {get; set;}
     /// <summary>
     /// The encoding used for the error and out streams (default: UTF-8).
     /// </summary>
-    public static Encoding OutEncoding {get { return Console.OutputEncoding; } set {Console.OutputEncoding = value; }}
-    /// <summary>
-    /// Creates a new Terminal Window.
-    /// </summary>
-    /// <param name="title">The name of the window</param>
-    /// <returns></returns>
-    /// <exception cref="PlatformNotSupportedException"></exception>
-    public static TerminalWindow CreateWindow(string title) {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-            return new WinTerminalWindow(title);
-        } else {
-            throw new PlatformNotSupportedException("No window implementation for your platform.");
-        }
-    }
+    public abstract Encoding OutEncoding {get; set;}
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the terminal, with a style.
     /// </summary>
     /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
-    public static void Write<T>(T? text, Style? style = null) {
+    public virtual void Write<T>(T? text, Style? style = null) {
         Out.Write((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -107,7 +64,7 @@ public static class Terminal {
     /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
-    public static void WriteLine<T>(T? text, Style? style = null) {
+    public virtual void WriteLine<T>(T? text, Style? style = null) {
         Out.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -116,7 +73,7 @@ public static class Terminal {
     /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
-    public static void WriteErrorLine<T>(T? text, Style? style = null) {
+    public virtual void WriteErrorLine<T>(T? text, Style? style = null) {
         Error.WriteLine((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -125,7 +82,7 @@ public static class Terminal {
     /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
-    public static void WriteError<T>(T? text, Style? style = null) {
+    public virtual void WriteError<T>(T? text, Style? style = null) {
         Error.Write((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -133,7 +90,7 @@ public static class Terminal {
     /// </summary>
     /// <param name="pos">The position.</param>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static void Goto((int x, int y) pos) {
+    public virtual void Goto((int x, int y) pos) {
         if (pos.x >= Width || pos.x < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos x is higher than the width or is lower than 0."); }
         if (pos.y >= Height || pos.y < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos y is higher than the height or is lower than 0."); }
         Out.Write(ANSI.MoveCursor(pos.x, pos.y));
@@ -142,9 +99,7 @@ public static class Terminal {
     /// Gets the cursor position.
     /// </summary>
     /// <returns>The cursor position.</returns>
-    public static (int x, int y) GetCursorPosition() {
-        return Console.GetCursorPosition();
-    }
+    public abstract (int x, int y) GetCursorPosition();
     /// <summary>
     /// Sets the something (<see cref="object.ToString"/>) at a <paramref name="pos"/>, with a <paramref name="style"/>.
     /// </summary>
@@ -152,7 +107,7 @@ public static class Terminal {
     /// <param name="text">The thing to set at <paramref name="pos"/> to the terminal.</param>
     /// <param name="pos">The position to set <paramref name="text"/> at.</param>
     /// <param name="style">The text decoration to use.</param>
-    public static void Set<T>(T? text, (int x, int y) pos, Style? style = null) {
+    public virtual void Set<T>(T? text, (int x, int y) pos, Style? style = null) {
         Goto(pos);
         Write(text, style);
     }
@@ -164,7 +119,7 @@ public static class Terminal {
     /// <param name="text">The thing to set at <paramref name="pos"/> to the terminal.</param>
     /// <param name="pos">The position to set <paramref name="text"/> at.</param>
     /// <param name="style">The text decoration to use.</param>
-    public static void SetError<T>(T? text, (int x, int y) pos, Style? style = null) {
+    public virtual void SetError<T>(T? text, (int x, int y) pos, Style? style = null) {
         Goto(pos);
         WriteError(text, style);
     }
@@ -172,31 +127,40 @@ public static class Terminal {
     /// Reads one character from the input stream.
     /// </summary>
     /// <returns>The character that has been read (-1 if everything has been read).</returns>
-    public static int Read() {
+    public virtual int Read() {
         return In.Read();
     }
     /// <summary>
     /// Reads a line from the input stream.
     /// </summary>
     /// <returns>The line that has been read (null if everything has been read).</returns>
-    public static string? ReadLine() {
+    public virtual string? ReadLine() {
         return In.ReadLine();
     }
     /// <summary>
     /// Waits until a key is pressed.
     /// </summary>
-    public static void WaitForKeyPress() {
-        Console.ReadKey(true);
-    }
+    public abstract void WaitForKeyPress();
     /// <summary>
     /// An event for when a key is pressed.
     /// </summary>
-    public static event KeyPressCallback? OnKeyPress;
+    public event KeyPressCallback? OnKeyPress;
+    /// <summary>
+    /// Raises an on keypress event.
+    /// </summary>
+    /// <param name="key">The key that is pressed.</param>
+    /// <param name="keyChar">The corresponding char of the key (shift is used).</param>
+    /// <param name="alt">If the alt key was pressed.</param>
+    /// <param name="shift">If the shift key was pressed.</param>
+    /// <param name="control">If the control key was pressed.</param>
+    protected void KeyPress(ConsoleKey key, char keyChar, bool alt, bool shift, bool control) {
+        OnKeyPress?.Invoke(key, keyChar, alt, shift, control);
+    }
 
     /// <summary>
     /// Clears (resets) the whole screen.
     /// </summary>
-    public static void Clear() {
+    public virtual void Clear() {
         Goto((0,0));
         Out.Write(ANSI.EraseScreenFromCursor);
     }
@@ -204,7 +168,7 @@ public static class Terminal {
     /// Clears screen from the position to end of the screen.
     /// </summary>
     /// <param name="pos">The start position.</param>
-    public static void ClearFrom((int x, int y) pos) {
+    public virtual void ClearFrom((int x, int y) pos) {
         Goto(pos);
         Out.Write(ANSI.EraseLineFromCursor);
     }
@@ -212,7 +176,7 @@ public static class Terminal {
     /// Clears (deletes) a line.
     /// </summary>
     /// <param name="line">The y-axis of the line.</param>
-    public static void ClearLine(int line) {
+    public virtual void ClearLine(int line) {
         Goto((0, line));
         Out.Write(ANSI.EraseLine);
     }
@@ -220,16 +184,53 @@ public static class Terminal {
     /// Clears the line from the position to the end of the line.
     /// </summary>
     /// <param name="pos">The start position.</param>
-    public static void ClearLineFrom((int x, int y) pos) {
+    public virtual void ClearLineFrom((int x, int y) pos) {
         Goto(pos);
         Out.Write(ANSI.EraseLineFromCursor);
     }
-    private static void ListenForKeysMethod() {
-        while (listenForKeys) {
-            ConsoleKeyInfo key = Console.ReadKey(true);
-            if (!Console.IsInputRedirected) {
-                OnKeyPress?.Invoke(key.Key, key.KeyChar, key.Modifiers.HasFlag(ConsoleModifiers.Alt), key.Modifiers.HasFlag(ConsoleModifiers.Shift), key.Modifiers.HasFlag(ConsoleModifiers.Control));
-            }
+    /// <summary>
+    /// The thread that is running <see cref="ListenForKeysMethod"/>.
+    /// </summary>
+    protected Thread? listenForKeysThread;
+    /// <summary>
+    /// If this window is currently listening to keys.
+    /// </summary>
+    protected bool listenForKeys = false;
+    /// <summary>
+    /// If it should listen for keys.
+    /// </summary>
+    public virtual bool ListenForKeys {set {
+        if (value && (!listenForKeys)) {
+            listenForKeys = value;
+            listenForKeysThread = new Thread(ListenForKeysMethod);
+            listenForKeysThread.Start();
+        } else {
+            listenForKeys = value;
         }
+    } get {
+        return listenForKeys;
+    }}
+    /// <summary>
+    /// Method in new thread that should call <see cref="OnKeyPress"/> when a key is pressed.
+    /// </summary>
+    protected abstract void ListenForKeysMethod();
+
+    /// <summary>
+    /// If it already is disposed.
+    /// </summary>
+    public bool IsDisposed {get; protected set;}
+    /// <inheritdoc/>
+    public virtual void Dispose() {
+        if (IsDisposed) { return; }
+        IsDisposed = true;
+
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes the window.
+    /// </summary>
+    ~TerminalWindow() {
+        Dispose();
     }
 }

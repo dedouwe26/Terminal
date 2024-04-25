@@ -1,17 +1,17 @@
 ﻿// The namespace of the terminal.
-using OxDEDTerm;
+using OxDED.Terminal;
 
 class Program {
     public static sbyte countdown = 5;
     public static void Main(string[] args) {
-        // Will listen for keys.
+        // Will listen for keys.e
         Terminal.ListenForKeys = true;
         // Adds an event.
-        Terminal.onKeyPress += OnKey;
+        Terminal.OnKeyPress += OnKey;
     }
     public static void OnKey(ConsoleKey key, char keyChar, bool alt, bool shift, bool control) {
         // Says what key, and countdown
-        Terminal.WriteLine(key.ToString() + countdown.ToString());
+        Terminal.WriteLine(key.ToString() + " " + countdown.ToString());
 
         // lowers the countdown and checks if it is at zero.
         if ((--countdown)==0) {
