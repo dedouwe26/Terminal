@@ -111,6 +111,13 @@ public static class Terminal {
         Out.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
+    /// Writes a line to the terminal, with a style.
+    /// </summary>
+    /// <param name="style">The text decoration to use.</param>
+    public static void WriteLine(Style? style = null) {
+        WriteLine<object>(null, style);
+    }
+    /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
     /// </summary>
     /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
@@ -118,6 +125,13 @@ public static class Terminal {
     /// <param name="style">The style to use (default: with red foreground).</param>
     public static void WriteErrorLine<T>(T? text, Style? style = null) {
         Error.WriteLine((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+    }
+    /// <summary>
+    /// Writes a line to the error stream, with a style.
+    /// </summary>
+    /// <param name="style">The text decoration to use (default: with red foreground).</param>
+    public static void WriteErrorLine(Style? style = null) {
+        WriteLine<object>(null, style);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.

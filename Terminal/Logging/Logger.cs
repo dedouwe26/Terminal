@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace OxDED.Terminal.Logging;
 
 /// <summary>
@@ -13,6 +15,22 @@ public class Logger : IDisposable {
     /// </summary>
     public readonly string Name;
     /// <summary>
+    /// True if this logger is a sub logger.
+    /// </summary>
+    public bool IsSubLogger { get { return ParentLogger!=null; } }
+    /// <summary>
+    /// The parent logger if this logger is a sub logger.
+    /// </summary>
+    public Logger? ParentLogger { get; private set; }
+
+    /// <summary>
+    /// All the sub loggers of this logger.
+    /// </summary>
+    public ReadOnlyDictionary<string, Logger> SubLoggers { get { return subLoggers.AsReadOnly(); } }
+
+    private readonly Dictionary<string, Logger> subLoggers = [];
+
+    /// <summary>
     /// All the targets, key MUST BE typeof(...Target) or ITarget.GetType() only when using .
     /// </summary>
     public Dictionary<Type, (ITarget target, bool enabled)> Targets;
@@ -24,6 +42,17 @@ public class Logger : IDisposable {
     /// An event for when something is logged.
     /// </summary>
     public event LogCallback? OnLog;
+
+    private Logger(Logger parentLogger, string name, string id, Severity severity, Dictionary<Type, (ITarget target, bool enabled)> targets) {
+        ParentLogger = parentLogger;
+        ID = id;
+        Name = name;
+        logLevel = severity;
+        Targets = targets ?? new Dictionary<Type, (ITarget, bool enabled)> { { typeof(TerminalTarget), (new TerminalTarget(), true) }, { typeof(FileTarget), (new FileTarget("./latest.log"), true) } };
+        if (!Loggers.Register(this)) {
+            throw new ArgumentException("A logger with this ID has already been registered.", nameof(id));
+        }
+    }
     /// <summary>
     /// Creates a logger.
     /// </summary>
@@ -41,6 +70,7 @@ public class Logger : IDisposable {
             throw new ArgumentException("A logger with this ID has already been registered.", nameof(id));
         }
     }
+
     /// <summary>
     /// Sets the log level.
     /// </summary>
@@ -49,6 +79,27 @@ public class Logger : IDisposable {
         logLevel = maxSeverity;
     }
 
+    /// <summary>
+    /// Gets the target from type.
+    /// </summary>
+    /// <param name="type">The target type.</param>
+    /// <returns>The target if there is one.</returns>
+    public ITarget? GetTarget(Type type) {
+        if (!Targets.TryGetValue(type, out (ITarget target, bool enabled) target)) {
+            return null;
+        }
+        return target.target;
+    }
+    /// <summary>
+    /// Gets a target.
+    /// </summary>
+    /// <typeparam name="T">The type of the target.</typeparam>
+    /// <returns>The target if there is one.</returns>
+    /// <exception cref="ArgumentException"/>
+    public T GetTarget<T>() where T : ITarget {
+        ITarget? target = GetTarget(typeof(T)) ?? throw new ArgumentException("No target found.", nameof(T));
+        return (T)target!;
+    }
     /// <summary>
     /// Sets if a target is enabled.
     /// </summary>
@@ -172,14 +223,36 @@ public class Logger : IDisposable {
     public void LogTrace<T>(T? text) {
         Log(Severity.Trace, text);
     }
+
     /// <summary>
-    /// Disposes all targets, and unregisters this logger.
+    /// Creates a sub logger.
     /// </summary>
+    /// <param name="name">The sub name of the logger.</param>
+    /// <param name="id">The sub ID (parent ID + '.' + ID = child ID).</param>
+    /// <param name="severity">The log level of the new sub logger.</param>
+    /// <param name="targets">The targets of the new sub logger (default: Targets of parent).</param>
+    /// <returns>The created sub logger.</returns>
+    public Logger CreateSubLogger(string name, string id, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
+        Logger subLogger = new(this, name, ID+'.'+id, severity, targets == null ? Targets : targets.Select(target => new KeyValuePair<Type, (ITarget target, bool enabled)>(target.Key, (target.Value, true))).ToDictionary());
+        subLoggers.Add(subLogger.ID, subLogger);
+        return subLogger;
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Disposes all targets, and unregisters this logger.
+    /// </remarks>
     public void Dispose() {
         Loggers.UnRegister(this);
         foreach (KeyValuePair<Type, (ITarget target, bool enabled)> target in Targets) {
             target.Value.target.Dispose();
         }
         GC.SuppressFinalize(this);
+    }
+    /// <summary>
+    /// Disposes this logger.
+    /// </summary>
+    ~Logger() {
+        Dispose();
     }
 }

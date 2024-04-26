@@ -18,13 +18,21 @@ public static class Loggers {
     /// <summary>
     /// Unregisters a logger.
     /// </summary>
-    /// <param name="logger">The logger to unregister.</param>
+    /// <param name="ID">The ID of the logger to unregister.</param>
     /// <returns>True if it was successful, false if there is no logger with that ID.</returns>
+    public static bool UnRegister(string ID) {
+        return registeredLoggers.Remove(ID);
+    }
+    /// <summary>
+    /// Unregisters a logger.
+    /// </summary>
+    /// <param name="logger">The logger to unregister.</param>
+    /// <returns>True if it was successful, false if that logger isn't registered or doesn't exist.</returns>
     public static bool UnRegister(Logger logger) {
         return registeredLoggers.Remove(logger.ID);
     }
     /// <summary>
-    /// Gets the logger corresponding to the ID.
+    /// Gets the logger to the corresponding ID if there is one.
     /// </summary>
     /// <param name="ID">The ID of the logger.</param>
     /// <returns>The logger (if there is one).</returns>
