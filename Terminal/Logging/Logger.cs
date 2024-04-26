@@ -80,6 +80,24 @@ public class Logger : IDisposable {
     }
 
     /// <summary>
+    /// Checks if this logger has a target of that type.
+    /// </summary>
+    /// <param name="type">The target type.</param>
+    /// <returns>True if it has a target of that type.</returns>
+    public bool HasTarget(Type type) {
+        return Targets.ContainsKey(type);
+    }
+
+    /// <summary>
+    /// Checks if this logger has a target of that type.
+    /// </summary>
+    /// <typeparam name="T">The type of the target.</typeparam>
+    /// <returns>True if it has a target of that type.</returns>
+    public bool HasTarget<T>() where T : ITarget {
+        return HasTarget(typeof(T));
+    }
+
+    /// <summary>
     /// Gets the target from type.
     /// </summary>
     /// <param name="type">The target type.</param>
@@ -150,6 +168,37 @@ public class Logger : IDisposable {
     /// <returns>True if there was a target with that type.</returns>
     public bool RemoveTarget(Type type) {
         return Targets.Remove(type);
+    }
+
+    /// <summary>
+    /// Checks if this logger has a sub logger with that ID.
+    /// </summary>
+    /// <param name="ID">The ID of the sub logger.</param>
+    /// <returns>True if this logger has a sub logger with that ID.</returns>
+    public bool HasSubLogger(string ID) {
+        return subLoggers.ContainsKey(ID);
+    }
+    /// <summary>
+    /// Checks if this logger has a sub logger with that ID.
+    /// </summary>
+    /// <param name="logger">The sub logger.</param>
+    /// <returns>True if this logger has that sub logger.</returns>
+    public bool HasSubLogger(Logger logger) {
+        return subLoggers.ContainsKey(logger.ID);
+    }
+
+    /// <summary>
+    /// Gets the sub logger from an ID.
+    /// </summary>
+    /// <remarks>
+    /// Please use <see cref="Loggers.Get(string)"/>, if you want to get a logger with that ID.
+    /// Or use <see cref="HasSubLogger(string)"/> if you want to know if it has a sub logger with that ID.
+    /// </remarks>
+    /// <param name="ID">The ID of the sub logger.</param>
+    /// <returns>The sub logger.</returns>
+    public Logger? GetSubLogger(string ID) {
+        subLoggers.TryGetValue(ID, out Logger? logger);
+        return logger;
     }
     /// <summary>
     /// Logs something (<see cref="object.ToString"/>).

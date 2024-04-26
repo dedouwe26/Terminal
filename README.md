@@ -7,5 +7,5 @@ It also supports logging.
 ## Examples
 - [Colors](https://github.com/dedouwe26/Terminal/tree/main/examples/Colors/Program.cs) (colors and text decoration) 
 - [Keypresses](https://github.com/dedouwe26/Terminal/tree/main/examples/Keypresses/Program.cs) (waiting for keypress, reading keypresses)
-- [Logging](https://github.com/dedouwe26/Terminal/tree/main/examples/Logging/Program.cs)
+- [Logging](https://github.com/dedouwe26/Terminal/tree/main/examples/Logging/Program.cs) (also with sub-loggers.)
 - [Window](https://github.com/dedouwe26/Terminal/tree/main/examples/Window/Program.cs) (Creates a terminal window, Only works in GUI mode)
