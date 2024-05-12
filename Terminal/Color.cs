@@ -202,6 +202,14 @@ public class Color {
     /// </summary>
     public static readonly Color Yellow = new(255, 255, 0);
     /// <summary>
+    /// 255, 0, 255
+    /// </summary>
+    public static readonly Color Magenta = new(255, 0, 255);
+    /// <summary>
+    /// 0, 255, 255
+    /// </summary>
+    public static readonly Color Cyan = new(0, 255, 255);
+    /// <summary>
     /// 255, 160, 0
     /// </summary>
     public static readonly Color Orange = new(255, 160, 0);
@@ -209,6 +217,10 @@ public class Color {
     /// 180, 180, 180
     /// </summary>
     public static readonly Color Gray = new(180, 180, 180);
+    /// <summary>
+    /// 64, 64, 64
+    /// </summary>
+    public static readonly Color DarkGray = new(64, 64, 64);
     /// <summary>
     /// 0, 0, 0
     /// </summary>

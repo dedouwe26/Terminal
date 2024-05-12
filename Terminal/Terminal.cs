@@ -1,7 +1,5 @@
 ﻿using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
-using OxDED.Terminal.Logging;
 using OxDED.Terminal.Window;
 
 namespace OxDED.Terminal;
@@ -80,7 +78,7 @@ public static class Terminal {
     /// </summary>
     public static Encoding OutEncoding {get { return Console.OutputEncoding; } set {Console.OutputEncoding = value; }}
     /// <summary>
-    /// Creates a new Terminal Window.
+    /// Creates a new Terminal Window (Experimental).
     /// </summary>
     /// <param name="title">The name of the window</param>
     /// <returns></returns>
@@ -124,7 +122,7 @@ public static class Terminal {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public static void WriteErrorLine<T>(T? text, Style? style = null) {
-        Error.WriteLine((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Error.WriteLine((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes a line to the error stream, with a style.
@@ -140,7 +138,7 @@ public static class Terminal {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public static void WriteError<T>(T? text, Style? style = null) {
-        Error.Write((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Error.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Sets the cursor to that position.
@@ -150,7 +148,7 @@ public static class Terminal {
     public static void Goto((int x, int y) pos) {
         if (pos.x >= Width || pos.x < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos x is higher than the width or is lower than 0."); }
         if (pos.y >= Height || pos.y < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos y is higher than the height or is lower than 0."); }
-        Out.Write(ANSI.MoveCursor(pos.x, pos.y));
+        Out.Write(ANSI.MoveCursor(pos.x+1, pos.y+1));
     }
     /// <summary>
     /// Gets the cursor position.

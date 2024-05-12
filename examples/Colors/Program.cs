@@ -4,7 +4,7 @@ using OxDED.Terminal;
 class Program {
     public static void Main(string[] args) {
         // * Using style.
-        Terminal.WriteLine("Red", new Style{foregroundColor = Color.Red});
+        Terminal.WriteLine("Red", new Style{ForegroundColor = Color.Red});
 
         // Will reset to default color (used many times).
         string defaultColor = ((Color)Colors.Default).ToForegroundANSI();

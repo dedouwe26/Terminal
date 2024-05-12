@@ -26,7 +26,7 @@ internal static partial class WinAPI {
         internal ushort wVirtualScanCode;
         private ushort _uChar;
         internal uint dwControlKeyState;
-        internal char uChar => (char)_uChar;
+        internal readonly char uChar => (char)_uChar;
     }
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal struct INPUT_RECORD {

@@ -74,7 +74,7 @@ public abstract class TerminalWindow : IDisposable {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public virtual void WriteErrorLine<T>(T? text, Style? style = null) {
-        Error.WriteLine((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Error.WriteLine((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
@@ -83,7 +83,7 @@ public abstract class TerminalWindow : IDisposable {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public virtual void WriteError<T>(T? text, Style? style = null) {
-        Error.Write((style ?? new Style {foregroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Error.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Sets the cursor to that position.

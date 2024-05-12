@@ -43,11 +43,11 @@ public struct Style {
     /// <summary>
     /// The text color.
     /// </summary>
-    public Color foregroundColor = Colors.Default;
+    public Color ForegroundColor = Colors.Default;
     /// <summary>
     /// The color behind the text.
     /// </summary>
-    public Color backgroundColor = Colors.Default;
+    public Color BackgroundColor = Colors.Default;
 
     /// <summary>
     /// Creates a basic style.
@@ -71,6 +71,6 @@ public struct Style {
             (Striketrough ? ANSI.Styles.Striketrough : ANSI.Styles.ResetStriketrough) +
             (DoubleUnderline ? ANSI.Styles.DoubleUnderline : "") +
             ((!(Underline||DoubleUnderline)) ? ANSI.Styles.ResetUnderline : "") +
-            backgroundColor.ToBackgroundANSI() + foregroundColor.ToForegroundANSI();
+            BackgroundColor.ToBackgroundANSI() + ForegroundColor.ToForegroundANSI();
     }
 }
