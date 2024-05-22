@@ -5,7 +5,7 @@ namespace OxDED.Terminal.Logging;
 /// <summary>
 /// Represents a logger for the terminal and log files.
 /// </summary>
-public class Logger : IDisposable {
+public class Logger : IDisposable, IEquatable<Logger> {
     /// <summary>
     /// The ID of this logger.
     /// </summary>
@@ -303,5 +303,46 @@ public class Logger : IDisposable {
     /// </summary>
     ~Logger() {
         Dispose();
+    }
+
+    /// 
+    public static bool operator ==(Logger? left, Logger? right) {
+        if (left is null && right is null) {
+            return true;
+        } else if (left is null) {
+            return false;
+        }
+        return left.Equals(right);
+    }
+    /// 
+    public static bool operator !=(Logger? left, Logger? right) {
+        return !(left == right);
+    }
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Checks if the that color is identical to this one.
+    /// </remarks>
+    public bool Equals(Logger? other) {
+        if (other is null) {
+            return false;
+        }
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+        if (GetType() != other.GetType()) {
+            return false;
+        }
+        return ID == other.ID;
+    }
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Checks if the that color is identical to this one.
+    /// </remarks>
+    public override bool Equals(object? obj) {
+        return Equals(obj as Color);
+    }
+    /// <inheritdoc/>
+    public override int GetHashCode() {
+        return ID.GetHashCode();
     }
 }

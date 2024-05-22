@@ -13,21 +13,13 @@ public static class ANSI {
     /// </summary>
     public const string CSI = ESC+"[";
     
-    /// <summary>
     /// 
-    /// </summary>
     public const string EraseScreen = CSI+"2J";
-    /// <summary>
     /// 
-    /// </summary>
     public const string EraseScreenFromCursor = CSI+"0J";
-    /// <summary>
     /// 
-    /// </summary>
     public const string EraseLine = CSI+"2K";
-    /// <summary>
     /// 
-    /// </summary>
     public const string EraseLineFromCursor = CSI+"0K";
     /// <summary>
     /// Will return as CSI{row};{column}R <para/>
@@ -36,13 +28,9 @@ public static class ANSI {
     /// {column} is the column.
     /// </summary>
     public const string RequestCursorPosition = CSI+"6n";
-    /// <summary>
     /// 
-    /// </summary>
     public const string CursorInvisible = CSI+"?25l";
-    /// <summary>
     /// 
-    /// </summary>
     public const string CursorVisible = CSI+"?25h";
 
     /// <summary>

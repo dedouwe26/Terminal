@@ -3,7 +3,7 @@ namespace OxDED.Terminal;
 /// <summary>
 /// Contains the style decorations.
 /// </summary>
-public struct Style {
+public class Style : IEquatable<Style> {
     /// <summary>
     /// Interferes with <see cref="Faint"/>.
     /// </summary>
@@ -12,25 +12,15 @@ public struct Style {
     /// Interferes with <see cref="Bold"/>.
     /// </summary>
     public bool Faint = false;
-    /// <summary>
     /// 
-    /// </summary>
     public bool Italic = false;
-    /// <summary>
     /// 
-    /// </summary>
     public bool Underline = false;
-    /// <summary>
     /// 
-    /// </summary>
     public bool Blink = false;
-    /// <summary>
     /// 
-    /// </summary>
     public bool Inverse = false;
-    /// <summary>
     /// 
-    /// </summary>
     public bool Invisible = false;
     /// <summary>
     /// </summary>
@@ -58,7 +48,7 @@ public struct Style {
     /// Creates an ANSI coded string for the chosen decorations.
     /// </summary>
     /// <returns>The ANSI string.</returns>
-    public readonly string ToANSI() {
+    public string ToANSI() {
         return 
             (Bold ? ANSI.Styles.Bold : "") +
             (Faint ? ANSI.Styles.Faint : "") +
@@ -72,5 +62,65 @@ public struct Style {
             (DoubleUnderline ? ANSI.Styles.DoubleUnderline : "") +
             ((!(Underline||DoubleUnderline)) ? ANSI.Styles.ResetUnderline : "") +
             BackgroundColor.ToBackgroundANSI() + ForegroundColor.ToForegroundANSI();
+    }
+
+    /// 
+    public static bool operator ==(Style? left, Style? right) {
+        if (left is null && right is null) {
+            return true;
+        } else if (left is null) {
+            return false;
+        }
+        return left.Equals(right);
+    }
+    /// 
+    public static bool operator !=(Style? left, Style? right) {
+        return !(left == right);
+    }
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Checks if the that color is identical to this one.
+    /// </remarks>
+    public bool Equals(Style? other) {
+        if (other is null) {
+            return false;
+        }
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+        if (GetType() != other.GetType()) {
+            return false;
+        }
+        return (Bold == other.Bold) &&
+               (Faint == other.Faint) &&
+               (Italic == other.Italic) &&
+               (Underline == other.Underline) &&
+               (Blink == other.Blink) &&
+               (Inverse == other.Inverse) &&
+               (Invisible == other.Invisible) &&
+               (Striketrough == other.Striketrough) &&
+               (DoubleUnderline == other.DoubleUnderline) &&
+               (ForegroundColor == other.ForegroundColor) &&
+               (BackgroundColor == other.BackgroundColor);
+    }
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Checks if the that color is identical to this one.
+    /// </remarks>
+    public override bool Equals(object? obj) {
+        return Equals(obj as Color);
+    }
+    /// <inheritdoc/>
+    public override int GetHashCode() {
+        return (((((((Bold ? 1 : 0)
+               << 1 ^ (Faint ? 1 : 0))
+               << 1 ^ (Italic ? 1 : 0))
+               << 1 ^ (Underline ? 1 : 0))
+               << 1 ^ (Inverse ? 1 : 0))
+               << 1 ^ (Invisible ? 1 : 0))
+               << 1 ^ (Striketrough ? 1 : 0))
+               << 1 ^ (DoubleUnderline ? 1 : 0)
+                ^ ForegroundColor.GetHashCode()
+                ^ ForegroundColor.GetHashCode();
     }
 }

@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace OxDED.Terminal;
 
 
@@ -5,37 +7,21 @@ namespace OxDED.Terminal;
 /// These are TERMINAL-DEFINED colors.
 /// </summary>
 public enum Colors : byte {
-    /// <summary>
     /// 
-    /// </summary>
     Black = 30,
-    /// <summary>
     /// 
-    /// </summary>
     Red = 31,
-    /// <summary>
     /// 
-    /// </summary>
     Green = 32,
-    /// <summary>
     /// 
-    /// </summary>
     Yellow = 33,
-    /// <summary>
     /// 
-    /// </summary>
     Blue = 34,
-    /// <summary>
     /// 
-    /// </summary>
     Magenta = 35,
-    /// <summary>
     /// 
-    /// </summary>
     Cyan = 36,
-    /// <summary>
     /// 
-    /// </summary>
     White = 37,
     
     /// <summary>
@@ -80,7 +66,7 @@ public enum Colors : byte {
 /// <summary>
 /// Represents a color for a terminal.
 /// </summary>
-public class Color {
+public class Color : IEquatable<Color> {
     /// <summary>
     /// The 8-bit (generated) table color.
     /// </summary>
@@ -229,19 +215,56 @@ public class Color {
     /// 255, 255, 255
     /// </summary>
     public static readonly Color White = new(255, 255, 255);
-    /// <summary>
     /// 
-    /// </summary>
     public static implicit operator Color(Colors color) { return new(color); }
-    /// <summary>
     /// 
-    /// </summary>
     public static explicit operator Colors?(Color color) {  return color.paletteColor; }
-    /// <summary>
     /// 
-    /// </summary>
     public static explicit operator Colors(Color color) {
         if (color.HasPaletteColor&&color.paletteColor.HasValue) { return color.paletteColor.Value; }
         throw new Exception("No palette color.");
+    }
+    /// 
+    /// 
+    public static bool operator ==(Color? left, Color? right) {
+        if (left is null && right is null) {
+            return true;
+        } else if (left is null) {
+            return false;
+        }
+        return left.Equals(right);
+    }
+    /// 
+    public static bool operator !=(Color? left, Color? right) {
+        return !(left == right);
+    }
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Checks if the that color is identical to this one.
+    /// </remarks>
+    public bool Equals(Color? other) {
+        if (other is null) {
+            return false;
+        }
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+        if (GetType() != other.GetType()) {
+            return false;
+        }
+        return tableColor == other.tableColor &&
+               paletteColor == other.paletteColor &&
+               trueColor == other.trueColor;
+    }
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Checks if the that color is identical to this one.
+    /// </remarks>
+    public override bool Equals(object? obj) {
+        return Equals(obj as Color);
+    }
+    /// <inheritdoc/>
+    public override int GetHashCode() {
+        return (tableColor ?? 0) ^ (paletteColor?.GetHashCode() ?? 0) ^ (trueColor?.GetHashCode() ?? 0);
     }
 }
