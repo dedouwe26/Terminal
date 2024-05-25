@@ -3,7 +3,7 @@ namespace OxDED.Terminal;
 /// <summary>
 /// Contains the style decorations.
 /// </summary>
-public class Style : IEquatable<Style> {
+public class Style : IEquatable<Style>, ICloneable {
     /// <summary>
     /// Interferes with <see cref="Faint"/>.
     /// </summary>
@@ -122,5 +122,31 @@ public class Style : IEquatable<Style> {
                << 1 ^ (DoubleUnderline ? 1 : 0)
                 ^ ForegroundColor.GetHashCode()
                 ^ ForegroundColor.GetHashCode();
+    }
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Calls <see cref="CloneStyle"/>.
+    /// </remarks>
+    public object Clone() {
+        return CloneStyle();
+    }
+    /// <summary>
+    /// Clones this style.
+    /// </summary>
+    /// <returns>The new copy of this style.</returns>
+    public Style CloneStyle() {
+        return new Style {
+            Bold = Bold,
+            Faint = Faint,
+            Italic = Italic,
+            Underline = Underline,
+            Blink = Blink,
+            Inverse = Inverse,
+            Invisible = Invisible,
+            Striketrough = Striketrough,
+            DoubleUnderline = DoubleUnderline,
+            ForegroundColor = ForegroundColor.CloneColor(),
+            BackgroundColor = BackgroundColor.CloneColor()
+        };
     }
 }
