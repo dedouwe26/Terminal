@@ -1,8 +1,20 @@
 namespace OxDED.Terminal.Arguments;
 
+/// <summary>
+/// Represents an optional argument (-f, --foo).
+/// </summary>
 public class Argument : ICloneable, IEquatable<Argument> {
+    /// <summary>
+    /// The keys of this argument (f, foo).
+    /// </summary>
     public string[] keys;
+    /// <summary>
+    /// The parameters of this argument.
+    /// </summary>
     public ArgumentParameter[] parameters;
+    /// <summary>
+    /// The description of this argument.
+    /// </summary>
     public string? description = null;
     public Argument(string key, string? description = null, IEnumerable<ArgumentParameter>? parameters = null) {
         keys = [key];
@@ -34,9 +46,12 @@ public class Argument : ICloneable, IEquatable<Argument> {
         parameters = [.. parameters, parameter];
         return this;
     }
+    /// <summary>
+    /// If this argument's parameters have values (should be yes).
+    /// </summary>
     public bool HasValue { get => parameters.All((ArgumentParameter parameter) => parameter.HasValue); }
 
-    //
+    ///
     public static bool operator ==(Argument? left, Argument? right) {
         if (left is null && right is null) {
             return true;

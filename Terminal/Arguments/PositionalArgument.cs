@@ -1,10 +1,26 @@
 namespace OxDED.Terminal.Arguments;
 
+/// <summary>
+/// Represents a required argument in a specific order.
+/// </summary>
 public class PositionalArgument : ICloneable {
+    /// <summary>
+    /// The name (key) of this positional argument.
+    /// </summary>
     public string name;
+    /// <summary>
+    /// The description of this positional argument.
+    /// </summary>
     public string? description;
     internal string? value;
+    /// <summary>
+    /// If this argument has a value (should be yes).
+    /// </summary>
     public bool HasValue { get => value != null; }
+    /// <summary>
+    /// The value of this positional argument (error if it isn't parsed).
+    /// </summary>
+    /// <exception cref="InvalidOperationException"/>
     public string Value { get {
         if (HasValue) {
             return value!;
