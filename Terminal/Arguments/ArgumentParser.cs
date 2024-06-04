@@ -56,7 +56,10 @@ public class ArgumentParser
     /// <summary>
     /// Sets the version of the application parser. And adds an argument.
     /// </summary>
-    /// <param name="keys"></param>
+    /// <param name="version">The version of the application.</param>
+    /// <param name="keys">The keys for the parameter (default: v, version).</param>
+    /// <param name="shouldExit"></param>
+    /// <returns></returns>
     
     public ArgumentParser Version(string version, IEnumerable<string>? keys = null, bool shouldExit = true)
     {
