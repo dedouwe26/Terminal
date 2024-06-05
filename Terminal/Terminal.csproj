@@ -7,12 +7,12 @@
     <PublishTrimmed>true</PublishTrimmed>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageId>0xDED.Terminal</PackageId>
-    <Version>3.1.4</Version>
+    <Version>4.0.0</Version>
     <Authors>0xDED</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>Terminal;library;console;logging;keyboard;ansi</PackageTags>
-    <PackageDescription>Terminal is a C# library for managing everything in the terminal, it's an alternative of Console, and it can be used for tui applications. It also supports logging.</PackageDescription>
+    <PackageTags>Terminal;library;console;logging;keyboard;ansi;argparser</PackageTags>
+    <PackageDescription>Terminal is a C# library for managing everything in the terminal, it's an alternative of Console, and it can be used for tui applications. It also supports logging, windowing (experimental) and argument parsing.</PackageDescription>
     <RepositoryUrl>https://github.com/dedouwe26/Terminal.git</RepositoryUrl> 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RepositoryType>git</RepositoryType>

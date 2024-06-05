@@ -175,7 +175,7 @@ public class ArgumentParser
     }
     private static string GetArgumentHelp(PositionalArgument arg, bool isRed = false)
     {
-        return $"{(isRed ? Color.LightRed.ToForegroundANSI() : Color.Orange.ToForegroundANSI())}\u2520{ANSI.Styles.ResetAll}  {arg.name}: {arg.description}";
+        return $"{(isRed ? Color.LightRed.ToForegroundANSI() : Color.Orange.ToForegroundANSI())}\u2520{ANSI.Styles.ResetAll}  {arg.name}{(arg.description == null ? "" : ": "+arg.description)}\n";
     }
     private static string GetArgumentHelpName(string[] keys)
     {
@@ -194,10 +194,10 @@ public class ArgumentParser
     }
     private static string GetArgumentHelp(Argument arg)
     {
-        string result = $"{Color.DarkGreen.ToForegroundANSI()}\u2520{ANSI.Styles.ResetAll}  {GetArgumentHelpName(arg.keys)}: {arg.description}\n";
+        string result = $"{Color.DarkGreen.ToForegroundANSI()}\u2520{ANSI.Styles.ResetAll}  {GetArgumentHelpName(arg.keys)}{(arg.description == null ? "" : ": "+arg.description)}\n";
         foreach (ArgumentParameter para in arg.parameters)
         {
-            result += $"{Color.DarkGreen.ToForegroundANSI()}\u2503  \u2560{ANSI.Styles.ResetAll} {para.name}: {para.description}\n";
+            result += $"{Color.DarkGreen.ToForegroundANSI()}\u2503  \u2560{ANSI.Styles.ResetAll} {para.name}{(para.description == null ? "" : ": "+para.description)}\n";
         }
         return result;
     }
@@ -221,7 +221,7 @@ public class ArgumentParser
                 }
 
             }
-            result += "\n\n";
+            result += "\n";
         }
         if (arguments.Count > 0 || helpArgument != null || versionArgument != null)
         {
