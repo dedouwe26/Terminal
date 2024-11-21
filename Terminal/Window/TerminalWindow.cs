@@ -1,71 +1,54 @@
 using System.Text;
 
-namespace OxDED.Terminal.Backend;
+namespace OxDED.Terminal.Window;
 
 /// <summary>
-/// Represents an interface of common methods of a terminal.
+/// Represents a terminal window that can be used.
 /// </summary>
-public interface ITerminalBackend : IDisposable {
+public abstract class TerminalWindow : IDisposable {
     /// <summary>
-    /// The data stream for reading from the terminal.
+    /// Sets default values.
     /// </summary>
-    public TextReader StandardInput { get; }
+    protected TerminalWindow() {
+        IsDisposed = true;
+    }
+
     /// <summary>
-    /// The data stream for writing to the terminal.
+    /// The title of the Terminal window.
     /// </summary>
-    public TextWriter StandardOutput { get; }
+    public abstract string Title { get; set;}
     /// <summary>
-    /// The data stream for writing errors to the terminal.
+    /// The out (to terminal) stream.
     /// </summary>
-    public TextWriter StandardError { get; }
+    public abstract TextWriter Out {get;}
     /// <summary>
-    /// The encoding used for the <see cref="StandardInput"/> stream (default: UTF-8).
+    /// The in (from terminal) stream.
     /// </summary>
-    public Encoding InputEncoding { get; set; }
+    public abstract TextReader In {get;}
     /// <summary>
-    /// The encoding used for the <see cref="StandardOutput"/> stream (default: UTF-8).
+    /// The error (to terminal) stream.
     /// </summary>
-    public Encoding OutputEncoding { get; set; }
+    public abstract TextWriter Error {get;}
     /// <summary>
-    /// The encoding used for the <see cref="StandardError"/> stream (default: UTF-8).
+    /// Hides or shows terminal cursor.
     /// </summary>
-    public Encoding ErrorEncoding { get; set; }
+    public abstract bool HideCursor {get; set;}
     /// <summary>
-    /// The width and the height (in characters) of the terminal.
+    /// The width (in characters) of the terminal.
     /// </summary>
-    public (int Width, int Height) Size { get; set; }
-
-}
-
-/// <summary>
-/// Represents an interface of common methods of a terminal.
-/// </summary>
-public abstract class TerminalBackend : ITerminalBackend {
-    /// <inheritdoc/>
-    public abstract TextReader StandardInput { get; }
-
-    /// <inheritdoc/>
-    public abstract TextWriter StandardOutput { get; }
-
-    /// <inheritdoc/>
-    public abstract TextWriter StandardError { get; }
-
-    /// <inheritdoc/>
-    public abstract Encoding InputEncoding { get; set; }
-
-    /// <inheritdoc/>
-    public abstract Encoding OutputEncoding { get; set; }
-
-    /// <inheritdoc/>
-    public abstract Encoding ErrorEncoding { get; set; }
-
-    /// <inheritdoc/>
-    public virtual (int Width, int Height) Size { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    
-    /// <inheritdoc/>
-    public abstract void Dispose();
-
-    
+    public abstract int Width {get;}
+    /// <summary>
+    /// The height (in characters) of the terminal.
+    /// </summary>
+    public abstract int Height {get;}
+    /// <summary>
+    /// The encoding used for the in stream (default: UTF-8).
+    /// </summary>
+    public abstract Encoding InEncoding {get; set;}
+    /// <summary>
+    /// The encoding used for the error and out streams (default: UTF-8).
+    /// </summary>
+    public abstract Encoding OutEncoding {get; set;}
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the terminal, with a style.
     /// </summary>
@@ -73,7 +56,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
     public virtual void Write<T>(T? text, Style? style = null) {
-        StandardOutput.Write((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Out.Write((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the terminal, with a style.
@@ -82,7 +65,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
     public virtual void WriteLine<T>(T? text, Style? style = null) {
-        StandardOutput.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Out.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
@@ -91,7 +74,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public virtual void WriteErrorLine<T>(T? text, Style? style = null) {
-        StandardError.WriteLine((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Error.WriteLine((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
@@ -100,7 +83,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public virtual void WriteError<T>(T? text, Style? style = null) {
-        StandardError.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Error.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Sets the cursor to that position.
@@ -108,11 +91,9 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="pos">The position.</param>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public virtual void Goto((int x, int y) pos) {
-        try {
-            if (pos.x >= Size.Width || pos.x < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos x is higher than the width or is lower than 0."); }
-            if (pos.y >= Size.Height || pos.y < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos y is higher than the height or is lower than 0."); }
-        } catch (NotImplementedException) { }
-        StandardOutput.Write(ANSI.MoveCursor(pos.x, pos.y));
+        if (pos.x >= Width || pos.x < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos x is higher than the width or is lower than 0."); }
+        if (pos.y >= Height || pos.y < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos y is higher than the height or is lower than 0."); }
+        Out.Write(ANSI.MoveCursor(pos.x, pos.y));
     }
     /// <summary>
     /// Gets the cursor position.
@@ -122,7 +103,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <summary>
     /// Sets the something (<see cref="object.ToString"/>) at a <paramref name="pos"/>, with a <paramref name="style"/>.
     /// </summary>
-    /// <typeparam name="T">The type of what to write.</typeparam>
+    /// <typeparam name="T"></typeparam>
     /// <param name="text">The thing to set at <paramref name="pos"/> to the terminal.</param>
     /// <param name="pos">The position to set <paramref name="text"/> at.</param>
     /// <param name="style">The text decoration to use.</param>
@@ -134,7 +115,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <summary>
     /// Sets the something in the error stream (<see cref="object.ToString"/>) at a <paramref name="pos"/>, with a <paramref name="style"/>.
     /// </summary>
-    /// <typeparam name="T">The type of what to write.</typeparam>
+    /// <typeparam name="T"></typeparam>
     /// <param name="text">The thing to set at <paramref name="pos"/> to the terminal.</param>
     /// <param name="pos">The position to set <paramref name="text"/> at.</param>
     /// <param name="style">The text decoration to use.</param>
@@ -147,14 +128,14 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// </summary>
     /// <returns>The character that has been read (-1 if everything has been read).</returns>
     public virtual int Read() {
-        return StandardInput.Read();
+        return In.Read();
     }
     /// <summary>
     /// Reads a line from the input stream.
     /// </summary>
     /// <returns>The line that has been read (null if everything has been read).</returns>
     public virtual string? ReadLine() {
-        return StandardInput.ReadLine();
+        return In.ReadLine();
     }
     /// <summary>
     /// Waits until a key is pressed.
@@ -181,7 +162,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// </summary>
     public virtual void Clear() {
         Goto((0,0));
-        StandardOutput.Write(ANSI.EraseScreenFromCursor);
+        Out.Write(ANSI.EraseScreenFromCursor);
     }
     /// <summary>
     /// Clears screen from the position to end of the screen.
@@ -189,7 +170,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="pos">The start position.</param>
     public virtual void ClearFrom((int x, int y) pos) {
         Goto(pos);
-        StandardOutput.Write(ANSI.EraseLineFromCursor);
+        Out.Write(ANSI.EraseLineFromCursor);
     }
     /// <summary>
     /// Clears (deletes) a line.
@@ -197,7 +178,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="line">The y-axis of the line.</param>
     public virtual void ClearLine(int line) {
         Goto((0, line));
-        StandardOutput.Write(ANSI.EraseLine);
+        Out.Write(ANSI.EraseLine);
     }
     /// <summary>
     /// Clears the line from the position to the end of the line.
@@ -205,7 +186,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="pos">The start position.</param>
     public virtual void ClearLineFrom((int x, int y) pos) {
         Goto(pos);
-        StandardOutput.Write(ANSI.EraseLineFromCursor);
+        Out.Write(ANSI.EraseLineFromCursor);
     }
     /// <summary>
     /// The thread that is running <see cref="ListenForKeysMethod"/>.
@@ -229,9 +210,27 @@ public abstract class TerminalBackend : ITerminalBackend {
     } get {
         return listenForKeys;
     }}
-
     /// <summary>
     /// Method in new thread that should call <see cref="OnKeyPress"/> when a key is pressed.
     /// </summary>
     protected abstract void ListenForKeysMethod();
+
+    /// <summary>
+    /// If it already is disposed.
+    /// </summary>
+    public bool IsDisposed {get; protected set;}
+    /// <inheritdoc/>
+    public virtual void Dispose() {
+        if (IsDisposed) { return; }
+        IsDisposed = true;
+
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes the window.
+    /// </summary>
+    ~TerminalWindow() {
+        Dispose();
+    }
 }
