@@ -57,7 +57,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     public abstract Encoding OutputEncoding { get; set; }
 
     /// <inheritdoc/>
-    public abstract Encoding ErrorEncoding { get; set; }
+    public virtual Encoding ErrorEncoding { get; set; }
 
     /// <inheritdoc/>
     public virtual (int Width, int Height) Size { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -73,6 +73,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
     public virtual void Write<T>(T? text, Style? style = null) {
+        if (text==null) return;
         StandardOutput.Write((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -82,6 +83,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
     public virtual void WriteLine<T>(T? text, Style? style = null) {
+        if (text==null) return;
         StandardOutput.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -91,6 +93,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public virtual void WriteErrorLine<T>(T? text, Style? style = null) {
+        if (text==null) return;
         StandardError.WriteLine((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -100,6 +103,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public virtual void WriteError<T>(T? text, Style? style = null) {
+        if (text==null) return;
         StandardError.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
