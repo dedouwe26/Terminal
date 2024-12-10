@@ -1,6 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
-using OxDED.Terminal.Backend;
 using OxDED.Terminal.Window;
 
 namespace OxDED.Terminal;
@@ -86,9 +85,8 @@ public static class Terminal {
     /// <exception cref="PlatformNotSupportedException"></exception>
     public static TerminalWindow CreateWindow(string title) {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-            return new WindowsBackend(title);
+            return new WinTerminalWindow(title);
         } else {
-            return new ConsoleBackend();
             throw new PlatformNotSupportedException("No implementation for your platform.");
         }
     }

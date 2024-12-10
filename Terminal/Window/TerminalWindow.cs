@@ -56,7 +56,7 @@ public abstract class TerminalWindow : IDisposable {
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
     public virtual void Write<T>(T? text, Style? style = null) {
-        StandardOutput.Write((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Out.Write((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the terminal, with a style.
@@ -65,7 +65,7 @@ public abstract class TerminalWindow : IDisposable {
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
     public virtual void WriteLine<T>(T? text, Style? style = null) {
-        StandardOutput.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Out.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
@@ -74,7 +74,7 @@ public abstract class TerminalWindow : IDisposable {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public virtual void WriteErrorLine<T>(T? text, Style? style = null) {
-        StandardError.WriteLine((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Error.WriteLine((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
@@ -83,7 +83,7 @@ public abstract class TerminalWindow : IDisposable {
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
     public virtual void WriteError<T>(T? text, Style? style = null) {
-        StandardError.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
+        Error.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Sets the cursor to that position.
