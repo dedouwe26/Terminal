@@ -84,9 +84,9 @@ public static class Terminal {
     /// <param name="title">The name of the window</param>
     /// <returns></returns>
     /// <exception cref="PlatformNotSupportedException"></exception>
-    public static TerminalBackend CreateBackend(string title) {
+    public static TerminalWindow CreateWindow(string title) {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-            return new WindowsBackend();
+            return new WindowsBackend(title);
         } else {
             return new ConsoleBackend();
             throw new PlatformNotSupportedException("No implementation for your platform.");
