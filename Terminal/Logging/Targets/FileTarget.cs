@@ -37,7 +37,7 @@ public class FileTarget : ITarget {
         if (format != null) {
             Format = format;
         }
-        FileOut = new StreamWriter(File.OpenWrite(path));
+        FileOut = new StreamWriter(File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
     }
     /// <inheritdoc/>
     public void Dispose() {
@@ -49,7 +49,7 @@ public class FileTarget : ITarget {
         if (!logger.IsSubLogger) {
             return logger.Name;
         } else {
-            return string.Format(NameFormat, GetName(logger.ParentLogger!), logger.Name);
+            return string.Format(NameFormat, GetName((logger as SubLogger)!.ParentLogger), logger.Name);
         }
     }
 

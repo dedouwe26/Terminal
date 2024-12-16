@@ -9,19 +9,16 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// <summary>
     /// The ID of this logger.
     /// </summary>
-    public readonly string ID;
+    public readonly string? ID;
     /// <summary>
     /// The name of this logger.
     /// </summary>
     public readonly string Name;
+
     /// <summary>
-    /// True if this logger is a sub logger.
+    /// Checks if this is a sub logger.
     /// </summary>
-    public bool IsSubLogger { get { return ParentLogger!=null; } }
-    /// <summary>
-    /// The parent logger if this logger is a sub logger.
-    /// </summary>
-    public Logger? ParentLogger { get; private set; }
+    public bool IsSubLogger => this is SubLogger;
 
     /// <summary>
     /// All the sub loggers of this logger.
@@ -31,7 +28,7 @@ public class Logger : IDisposable, IEquatable<Logger> {
     private readonly Dictionary<string, Logger> subLoggers = [];
 
     /// <summary>
-    /// All the targets, key MUST BE typeof(...Target) or ITarget.GetType() only when using .
+    /// All the targets, key MUST BE typeof(...Target) or ITarget.GetType() only when using.
     /// </summary>
     public Dictionary<Type, (ITarget target, bool enabled)> Targets;
     /// <summary>
@@ -43,32 +40,34 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// </summary>
     public event LogCallback? OnLog;
 
-    private Logger(Logger parentLogger, string name, string id, Severity severity, Dictionary<Type, (ITarget target, bool enabled)> targets) {
-        ParentLogger = parentLogger;
-        ID = id;
-        Name = name;
-        logLevel = severity;
-        Targets = targets ?? new Dictionary<Type, (ITarget, bool enabled)> { { typeof(TerminalTarget), (new TerminalTarget(), true) }, { typeof(FileTarget), (new FileTarget("./latest.log"), true) } };
-        if (!Loggers.Register(this)) {
-            throw new ArgumentException("A logger with this ID has already been registered.", nameof(id));
-        }
-    }
+
     /// <summary>
     /// Creates a logger.
     /// </summary>
-    /// <param name="id">The ID to identify this logger, like 'me.0xDED.MyProject' (if this ID is already registered it will throw an <see cref="ArgumentException"/> error).</param>
+    /// <param name="id">The optional ID to identify this logger, like 'me.0xDED.MyProject'. It won't register if the ID is null (if this ID is already registered it will throw an <see cref="ArgumentException"/> error).</param>
     /// <param name="name">The name of the logger, used in the log files and terminal.</param>
     /// <param name="severity">The log level of this logger.</param>
     /// <param name="targets">The targets to add and enable (default: <see cref="TerminalTarget"/>, <see cref="FileTarget"/> with path "./latest.log").</param>
     /// <exception cref="ArgumentException"/>
-    public Logger(string id, string name, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
+    public Logger(string name = "Logger", string? id = null, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
         ID = id;
         Name = name;
         logLevel = severity;
-        Targets = targets != null ? targets.Select(target => new KeyValuePair<Type, (ITarget, bool)>(target.Key, (target.Value, true))).ToDictionary() : new Dictionary<Type, (ITarget, bool enabled)>{{typeof(TerminalTarget), (new TerminalTarget(), true)}, {typeof(FileTarget), (new FileTarget("./latest.log"), true)}};
-        if (!Loggers.Register(this)) {
-            throw new ArgumentException("A logger with this ID has already been registered.", nameof(id));
+        Targets = targets != null ? targets.Select(target => new KeyValuePair<Type, (ITarget, bool)>(target.Key, (target.Value, true))).ToDictionary() : new Dictionary<Type, (ITarget, bool enabled)> { { typeof(TerminalTarget), (new TerminalTarget(), true) }, { typeof(FileTarget), (new FileTarget("./latest.log"), true) } };
+        if (id != null) {
+            if (!Loggers.Register(this)) {
+                throw new ArgumentException("A logger with this ID has already been registered.", nameof(id));
+            }
         }
+        
+    }
+
+    /// <summary>
+    /// Checks if this logger is registered.
+    /// </summary>
+    /// <returns></returns>
+    public bool IsRegistered() {
+        return ID is not null;
     }
 
     /// <summary>
@@ -173,18 +172,18 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// <summary>
     /// Checks if this logger has a sub logger with that ID.
     /// </summary>
-    /// <param name="ID">The ID of the sub logger.</param>
+    /// <param name="childID">The child ID of the sub logger.</param>
     /// <returns>True if this logger has a sub logger with that ID.</returns>
-    public bool HasSubLogger(string ID) {
-        return subLoggers.ContainsKey(ID);
+    public bool HasSubLogger(string childID) {
+        return subLoggers.ContainsKey(childID);
     }
     /// <summary>
-    /// Checks if this logger has a sub logger with that ID.
+    /// Checks if this logger has this logger as a sub logger.
     /// </summary>
     /// <param name="logger">The sub logger.</param>
     /// <returns>True if this logger has that sub logger.</returns>
-    public bool HasSubLogger(Logger logger) {
-        return subLoggers.ContainsKey(logger.ID);
+    public bool HasSubLogger(SubLogger logger) {
+        return ReferenceEquals(this, logger.ParentLogger);
     }
 
     /// <summary>
@@ -194,10 +193,10 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// Please use <see cref="Loggers.Get(string)"/>, if you want to get a logger with that ID.
     /// Or use <see cref="HasSubLogger(string)"/> if you want to know if it has a sub logger with that ID.
     /// </remarks>
-    /// <param name="ID">The ID of the sub logger.</param>
+    /// <param name="childID">The child ID of the sub logger.</param>
     /// <returns>The sub logger.</returns>
-    public Logger? GetSubLogger(string ID) {
-        subLoggers.TryGetValue(ID, out Logger? logger);
+    public Logger? GetSubLogger(string childID) {
+        subLoggers.TryGetValue(childID, out Logger? logger);
         return logger;
     }
     /// <summary>
@@ -277,13 +276,15 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// Creates a sub logger.
     /// </summary>
     /// <param name="name">The sub name of the logger.</param>
-    /// <param name="id">The sub ID (parent ID + '.' + ID = child ID).</param>
+    /// <param name="id">The sub ID. Full ID will be: parent ID + '.' + subID = child ID).</param>
+    /// <param name="shouldRegister">If the sublogger should be registered, if the parent logger is also registered.</param>
     /// <param name="severity">The log level of the new sub logger.</param>
     /// <param name="targets">The targets of the new sub logger (default: Targets of parent).</param>
     /// <returns>The created sub logger.</returns>
-    public Logger CreateSubLogger(string name, string id, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
-        Logger subLogger = new(this, name, ID+'.'+id, severity, targets == null ? Targets : targets.Select(target => new KeyValuePair<Type, (ITarget target, bool enabled)>(target.Key, (target.Value, true))).ToDictionary());
-        subLoggers.Add(subLogger.ID, subLogger);
+    /// <exception cref="ArgumentException" />
+    public SubLogger CreateSubLogger(string id, string name = "Sublogger", bool shouldRegister = true, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
+        SubLogger subLogger = new(this, id, name, (ID != null && shouldRegister) ? ID+'.'+id : null, severity, targets);
+        subLoggers.Add(id, subLogger);
         return subLogger;
     }
 
@@ -296,13 +297,12 @@ public class Logger : IDisposable, IEquatable<Logger> {
         foreach (KeyValuePair<Type, (ITarget target, bool enabled)> target in Targets) {
             target.Value.target.Dispose();
         }
+
+        foreach (KeyValuePair<string, Logger> subLogger in subLoggers) {
+            subLogger.Value.Dispose();
+        }
+
         GC.SuppressFinalize(this);
-    }
-    /// <summary>
-    /// Disposes this logger.
-    /// </summary>
-    ~Logger() {
-        Dispose();
     }
 
     /// 
@@ -332,7 +332,10 @@ public class Logger : IDisposable, IEquatable<Logger> {
         if (GetType() != other.GetType()) {
             return false;
         }
-        return ID == other.ID;
+        if (ID!=null) {
+            return ID == other.ID;
+        }
+        return false;
     }
     /// <inheritdoc/>
     /// <remarks>
@@ -343,6 +346,6 @@ public class Logger : IDisposable, IEquatable<Logger> {
     }
     /// <inheritdoc/>
     public override int GetHashCode() {
-        return ID.GetHashCode();
+        return ID == null ? Name.GetHashCode() ^ subLoggers.GetHashCode() ^ Targets.GetHashCode() : ID.GetHashCode();
     }
 }

@@ -13,6 +13,13 @@ class Program {
         byte[] randomBytes = new byte[1];
         Random.Shared.NextBytes(randomBytes);
 
+        // Printing out all the terminal-defined colors
+        foreach (Colors color in Enum.GetValues<Colors>()) {
+            Terminal.Write(color.ToString()+' ', new Style() { ForegroundColor = new Color(color)});
+        }
+
+        Terminal.WriteLine();
+
         // * In string formatting.
         Terminal.WriteLine(
             @$"{Color.Green.ToForegroundANSI()}Green{defaultColor}{"\t\t"}{ANSI.Styles.Blink}Blinking{ANSI.Styles.ResetBlink}

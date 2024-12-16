@@ -56,7 +56,7 @@ public class TerminalTarget : ITarget {
         if (!logger.IsSubLogger) {
             return logger.Name;
         } else {
-            return string.Format(NameFormat, GetName(logger.ParentLogger!), logger.Name);
+            return string.Format(NameFormat, GetName((logger as SubLogger)!.ParentLogger), logger.Name);
         }
     }
 
