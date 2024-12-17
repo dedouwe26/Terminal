@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using OxDED.Terminal.Logging.Targets;
 
 namespace OxDED.Terminal.Logging;
 
