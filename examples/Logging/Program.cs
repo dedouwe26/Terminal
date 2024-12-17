@@ -1,6 +1,7 @@
 ﻿// The namespace of terminal logging.
 using OxDED.Terminal;
 using OxDED.Terminal.Logging;
+using OxDED.Terminal.Logging.Targets;
 
 class Program {
     public const string LoggerID = "me.0xDED.Terminal.examples";

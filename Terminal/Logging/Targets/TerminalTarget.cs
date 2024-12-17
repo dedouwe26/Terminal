@@ -1,9 +1,9 @@
-namespace OxDED.Terminal.Logging;
+namespace OxDED.Terminal.Logging.Targets;
 
 /// <summary>
 /// A Logger Target for the terminal.
 /// </summary>
-public class TerminalTarget : ITarget {
+public class TerminalTarget : FormattedTarget {
     /// <summary>
     /// The out stream to the terminal.
     /// </summary>
@@ -13,23 +13,13 @@ public class TerminalTarget : ITarget {
     /// </summary>
     public TextWriter Error;
     /// <summary>
-    /// The format to use for writing to the terminal (0: name see <see cref="NameFormat"/>, 1: logger ID, 2: time, 3: severity, 4: message, 5: color ANSI).
+    /// The format to use for writing to the terminal (0: name see <see cref="FormattedTarget.NameFormat"/>, 1: logger ID, 2: time, 3: severity, 4: message, 5: color ANSI).
     /// </summary>
     /// <remarks>
     /// Default:
     /// <c>{5}[{0}][{2}][BOLD{3}RESETBOLD]: {4}RESETALL</c>
     /// </remarks>
-    public string Format = "{5}[{0}][{2}]["+ANSI.Styles.Bold+"{3}"+ANSI.Styles.ResetBold+"]: {4}"+ANSI.Styles.ResetAll;
-    /// <summary>
-    /// The format to use for creating names (0: parent name, 1: own name). <para/>
-    /// Example for default:
-    /// <c>{{App}: Sublogger}: sub-sublogger</c>
-    /// </summary>
-    /// <remarks>
-    /// default:
-    /// <c>{0}: {1}</c>
-    /// </remarks>
-    public string NameFormat = "{0}: {1}";
+    public new string Format = "{5}[{0}][{2}]["+ANSI.Styles.Bold+"{3}"+ANSI.Styles.ResetBold+"]: {4}"+ANSI.Styles.ResetAll;
     /// <summary>
     /// The colors of the severities (index: 0: Fatal, 1: Error, 2: Warning, 3: Message, 4: Info, 5: Debug, 6: Trace).
     /// </summary>
@@ -48,27 +38,23 @@ public class TerminalTarget : ITarget {
         Error = terminalError ?? Terminal.Error;
     }
     /// <inheritdoc/>
-    public void Dispose() {
+    public override void Dispose() {
         GC.SuppressFinalize(this);
     }
 
-    private string GetName(Logger logger) {
-        if (!logger.IsSubLogger) {
-            return logger.Name;
-        } else {
-            return string.Format(NameFormat, GetName((logger as SubLogger)!.ParentLogger), logger.Name);
-        }
+    private string GetText(Logger logger, DateTime time, Severity severity, string text, string color) {
+        return string.Format(Format, GetName(logger), logger.ID, time.ToString(), severity.ToString(), text, color);
     }
 
     /// <inheritdoc/>
     /// <remarks>
     /// Writes a line.
     /// </remarks>
-    public void Write<T>(Severity severity, DateTime time, Logger logger, T? text) {
+    public override void Write<T>(Severity severity, DateTime time, Logger logger, T? text) where T : default {
         if (((byte)severity) < 2) {
-            Error.WriteLine(string.Format(Format, GetName(logger), logger.ID, time.ToString(), severity.ToString(), text?.ToString()??"", SeverityColors[(byte)severity].ToForegroundANSI()));
+            Error.WriteLine(GetText(logger, time, severity, text?.ToString() ?? "(Null)", SeverityColors[(byte)severity].ToForegroundANSI()));
         } else {
-            Out.WriteLine(string.Format(Format, GetName(logger), logger.ID, time.ToString(), severity.ToString(), text?.ToString()??"", SeverityColors[(byte)severity].ToForegroundANSI()));
+            Out.WriteLine(GetText(logger, time, severity, text?.ToString() ?? "(Null)", SeverityColors[(byte)severity].ToForegroundANSI()));
         }
         
     }
