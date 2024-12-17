@@ -35,6 +35,10 @@ class Program {
                 == 
             Assert.IsType<int>(42).IsSuccess();             // Assert   equivalent
         
+        // Some custom asserter functions:
+        new Asserter<bool>(true).IsTrue();
+        new Asserter<Action>(()=>throw new Exception()).Throws();
+
         // Different assertions have different asserters.
         // Like the exception assertion has (ExceptionAssertion<T, TException> has another one):
         ExceptionAssertion<Exception>.Create(()=>{})
@@ -69,6 +73,7 @@ class Program {
         ).OnFailure((Assertion failedAssertion) => 
             failedAssertion.As<ValueAssertion<string, int>>()!.SecondAsserter().Log(logger)
         );
+
 
         Assert.IsTrue(false).Throw();
         // bye, bye.
