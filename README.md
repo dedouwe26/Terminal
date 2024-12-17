@@ -8,5 +8,6 @@ It also supports logging.
 - [Colors](https://github.com/dedouwe26/Terminal/tree/main/examples/Colors/Program.cs) (colors and text decoration) 
 - [Keypresses](https://github.com/dedouwe26/Terminal/tree/main/examples/Keypresses/Program.cs) (waiting for keypress, reading keypresses)
 - [Logging](https://github.com/dedouwe26/Terminal/tree/main/examples/Logging/Program.cs) (also with sub-loggers.)
-- [Window](https://github.com/dedouwe26/Terminal/tree/main/examples/Window/Program.cs) (doesn't work)
+- [Assertions](https://github.com/dedouwe26/Terminal/tree/main/examples/Assertion/Program.cs) (one-liners)
 - [Argument parsing](https://github.com/dedouwe26/Terminal/tree/main/examples/Args/Program.cs)
+- [Window](https://github.com/dedouwe26/Terminal/tree/main/examples/Window/Program.cs) (doesn't work)
