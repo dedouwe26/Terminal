@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.ObjectModel;
 using OxDED.Terminal.Logging.Targets;
 
@@ -200,6 +201,46 @@ public class Logger : IDisposable, IEquatable<Logger> {
         subLoggers.TryGetValue(childID, out Logger? logger);
         return logger;
     }
+    private bool handlingUnhandledExceptions;
+    private string GetStacktrace(Exception e) {
+        string stackTrace = e.StackTrace ?? "   (Unknown)";
+        if (e.InnerException != null) {
+            Exception inner = e.InnerException;
+            string source = inner.Source == null ? "" : $" (in: {inner.Source})";
+            return stackTrace + $"\nCaused by {inner.GetType().FullName} : '{inner.Message}'{source}: \n{GetStacktrace(inner)}";
+        } else {
+            return stackTrace;
+        }
+    }
+    private void HandleException(object sender, UnhandledExceptionEventArgs args) {
+        Exception e = (Exception) args.ExceptionObject;
+        string source = e.Source == null ? "" : $" (in: {e.Source})";
+        string message = $"Unhandled Exception : {e.GetType().Name} ({e.GetType().FullName}) : '{e.Message}'\nTrace{source}:\n{GetStacktrace(e)}";
+        
+        if (e.HelpLink != null) {
+            message += "\n\nHelp: "+e.HelpLink;
+        }
+        
+        Log(args.IsTerminating ? Severity.Fatal : Severity.Error, message);
+    }
+
+    /// <summary>
+    /// Logs unhandled exceptions in the current app domain to this logger.
+    /// </summary>
+    public bool HandleUnhandledExceptions {
+        get {
+            return handlingUnhandledExceptions;
+        }
+        set {
+            if (value) {
+                AppDomain.CurrentDomain.UnhandledException += HandleException;
+            } else {
+                AppDomain.CurrentDomain.UnhandledException -= HandleException;
+            }
+            handlingUnhandledExceptions = value;
+        }
+    }
+
     /// <summary>
     /// Logs something (<see cref="object.ToString"/>).
     /// </summary>

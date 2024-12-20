@@ -7,7 +7,7 @@ class Program {
     public const string LoggerID = "me.0xDED.Terminal.examples";
 
     // Creates a logger with an ID (optional) and name and with severity Trace (lowest).
-    public static Logger logger = new(LoggerID, "Logging Example", Severity.Trace);
+    public static Logger logger = new("Logging Example", LoggerID, Severity.Trace);
     public static void Main() {
         logger.LogMessage("Hello, world!");
         logger.LogInfo("This is the start of the program!");
@@ -23,13 +23,13 @@ class Program {
         Terminal.WriteLine("Sub loggers");
 
         // Sub loggers
-        SubLogger sublogger1 = logger.CreateSubLogger("Sub 1", "sub1", severity:Severity.Trace);
+        SubLogger sublogger1 = logger.CreateSubLogger("sub1", "Sub 1", severity:Severity.Trace);
         sublogger1.LogInfo("This is the first sub logger of "+logger.Name);
 
-        SubLogger sublogger2 = logger.CreateSubLogger("Sub 2", "sub2", severity:Severity.Trace);
+        SubLogger sublogger2 = logger.CreateSubLogger("sub2", "Sub 2", severity:Severity.Trace);
         sublogger2.LogMessage("This is the second sub logger of "+sublogger2.ParentLogger.Name); // Gets parent name from ParentLogger
 
-        SubLogger subsublogger = sublogger2.CreateSubLogger("sub-sub", "sub", severity:Severity.Trace);
+        SubLogger subsublogger = sublogger2.CreateSubLogger("sub", "sub-sub", severity:Severity.Trace);
 
         // sublogger2.SubLoggers[sublogger2.SubLoggers.Keys.ToArray()[0]]
         // NOTE: The difference between child ID and ID is that the child ID is used by the parent (last bit) and the ID is used by the Loggers Register (full ID).
@@ -52,7 +52,16 @@ class Program {
         sublogger2.GetTarget<TerminalTarget>().Format = "<{1}>: {3}: ({2}) : {5}{4}"+ANSI.Styles.ResetAll;
         sublogger2.LogDebug("Wow cool new format!");
 
-        // Don't forget to dispose the logger (does happen automatically).
+        // Can listen for unhandled exceptions in the current app domain.
+        logger.HandleUnhandledExceptions = true;
+
+        // try {
+        //     throw new Exception("middle", new Exception("inner"));
+        // } catch (Exception e) {
+        //     throw new Exception("outer", e);
+        // }
+
+        // Don't forget to dispose the logger.
         logger.Dispose();
     }
 }
