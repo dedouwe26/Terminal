@@ -61,6 +61,10 @@ class Program {
         //     throw new Exception("outer", e);
         // }
 
+        // Can also log exceptions.
+        logger.LogException(new Exception("outer", new Exception("middle", new Exception("inner"))));
+
+
         // Don't forget to dispose the logger.
         logger.Dispose();
     }

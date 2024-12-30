@@ -9,7 +9,7 @@ namespace OxDED.Terminal.Logging;
 /// </summary>
 public class Logger : IDisposable, IEquatable<Logger> {
     /// <summary>
-    /// The ID of this logger.
+    /// The ID of this logger (if it is registered).
     /// </summary>
     public readonly string? ID;
     /// <summary>
@@ -30,9 +30,9 @@ public class Logger : IDisposable, IEquatable<Logger> {
     private readonly Dictionary<string, Logger> subLoggers = [];
 
     /// <summary>
-    /// All the targets, key MUST BE typeof(...Target) or ITarget.GetType() only when using.
+    /// All the targets.
     /// </summary>
-    public Dictionary<Type, (ITarget target, bool enabled)> Targets;
+    public volatile List<(ITarget target, bool enabled)> Targets;
     /// <summary>
     /// The current log severity max.
     /// </summary>
@@ -51,17 +51,16 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// <param name="severity">The log level of this logger.</param>
     /// <param name="targets">The targets to add and enable (default: <see cref="TerminalTarget"/>, <see cref="FileTarget"/> with path "./latest.log").</param>
     /// <exception cref="ArgumentException"/>
-    public Logger(string name = "Logger", string? id = null, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
+    public Logger(string name = "Logger", string? id = null, Severity severity = Severity.Info, List<ITarget>? targets = null) {
         ID = id;
         Name = name;
         logLevel = severity;
-        Targets = targets != null ? targets.Select(target => new KeyValuePair<Type, (ITarget, bool)>(target.Key, (target.Value, true))).ToDictionary() : new Dictionary<Type, (ITarget, bool enabled)> { { typeof(TerminalTarget), (new TerminalTarget(), true) }, { typeof(FileTarget), (new FileTarget("./latest.log"), true) } };
+        Targets = targets != null ? targets.Select(target => (target, true)).ToList() : [ (new TerminalTarget(), true), (new FileTarget("./latest.log"), true) ];
         if (id != null) {
             if (!Loggers.Register(this)) {
                 throw new ArgumentException("A logger with this ID has already been registered.", nameof(id));
             }
         }
-        
     }
 
     /// <summary>
@@ -81,67 +80,78 @@ public class Logger : IDisposable, IEquatable<Logger> {
     }
 
     /// <summary>
-    /// Checks if this logger has a target of that type.
+    /// Checks if this logger has the target.
     /// </summary>
-    /// <param name="type">The target type.</param>
-    /// <returns>True if it has a target of that type.</returns>
-    public bool HasTarget(Type type) {
-        return Targets.ContainsKey(type);
-    }
-
-    /// <summary>
-    /// Checks if this logger has a target of that type.
-    /// </summary>
-    /// <typeparam name="T">The type of the target.</typeparam>
-    /// <returns>True if it has a target of that type.</returns>
-    public bool HasTarget<T>() where T : ITarget {
-        return HasTarget(typeof(T));
-    }
-
-    /// <summary>
-    /// Gets the target from type.
-    /// </summary>
-    /// <param name="type">The target type.</param>
-    /// <returns>The target if there is one.</returns>
-    public ITarget? GetTarget(Type type) {
-        if (!Targets.TryGetValue(type, out (ITarget target, bool enabled) target)) {
-            return null;
-        }
-        return target.target;
-    }
-    /// <summary>
-    /// Gets a target.
-    /// </summary>
-    /// <typeparam name="T">The type of the target.</typeparam>
-    /// <returns>The target if there is one.</returns>
-    /// <exception cref="ArgumentException"/>
-    public T GetTarget<T>() where T : ITarget {
-        ITarget? target = GetTarget(typeof(T)) ?? throw new ArgumentException("No target found.", nameof(T));
-        return (T)target!;
-    }
-    /// <summary>
-    /// Sets if a target is enabled.
-    /// </summary>
-    /// <typeparam name="T">The type of the Target (e.g. TerminalTarget).</typeparam>
-    /// <param name="enabled">True if enabled.</param>
-    /// <returns>True if there is a Target with that type.</returns>
-    public bool SetTarget<T>(bool enabled) where T : ITarget {
-        return SetTarget(typeof(T), enabled);
-    }
-
-    /// <summary>
-    /// Sets if a target is enabled.
-    /// </summary>
-    /// <param name="type">The type of the Target (e.g. typeof(TerminalTarget)).</param>
-    /// <param name="enabled">True if enabled.</param>
-    /// <returns>True if there is a Target with that type.</returns>
-    public bool SetTarget(Type type, bool enabled) {
-        if (Targets.TryGetValue(type, out (ITarget target, bool enabled) value)) {
-            value.enabled = enabled;
-            Targets[type] = value;
-            return true;
+    /// <param name="target">The target.</param>
+    /// <returns>True if it has that target.</returns>
+    public bool HasTarget(ITarget target) {
+        foreach ((ITarget t, _) in Targets) {
+            if (ReferenceEquals(t, target)) {
+                return true;
+            }
         }
         return false;
+    }
+
+    /// <summary>
+    /// Gets the target's index.
+    /// </summary>
+    /// <param name="target">The target which index to get.</param>
+    /// <returns>The index of the target or -1 if the target could not be found.</returns>
+    public int GetTargetIndex(ITarget target) {
+        for (int i = 0; i < Targets.Count; i++) {
+            if (ReferenceEquals(Targets[i].target, target)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// Gets the target from its index.
+    /// </summary>
+    /// <param name="index">The target index.</param>
+    /// <returns>The target if there is one.</returns>
+    public ITarget? GetTarget(int index) {
+        try {
+            return Targets[index].target;
+        } catch (IndexOutOfRangeException) {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Sets if a target is enabled.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="enabled">True if enabled.</param>
+    /// <returns>True if there is a Target with that type.</returns>
+    public bool SetTarget(int index, bool enabled) {
+        ITarget? target = GetTarget(index);
+        if (target == null) {
+            return false;
+        }
+        try {
+            Targets[index] = (target, enabled);
+        } catch (IndexOutOfRangeException) {
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Sets if a target is enabled.
+    /// </summary>
+    /// <param name="target"></param>
+    /// <param name="enabled">True if enabled.</param>
+    /// <returns>True if there is a Target with that type.</returns>
+    public bool SetTarget(ITarget target, bool enabled) {
+        int index = GetTargetIndex(target);
+        if (index == -1) {
+            return false;
+        }
+        Targets[index] = (target, enabled);
+        return true;
     }
 
     /// <summary>
@@ -150,25 +160,31 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// <param name="target">The target to add (e.g. typeof(TerminalTarget)).</param>
     /// <param name="enabled">If it is enabled.</param>
     public void AddTarget(ITarget target, bool enabled = true) {
-        Targets.Add(target.GetType(), (target, enabled));
+        Targets.Add((target, enabled));
     }
 
     /// <summary>
     /// Removes a Target.
     /// </summary>
-    /// <typeparam name="T">The type of the target</typeparam>
-    /// <returns>True if there was a target with that type.</returns>
-    public bool RemoveTarget<T>() where T : ITarget {
-        return RemoveTarget(typeof(T));
+    /// <param name="index">The index of the target to remove.</param>
+    /// <returns>True if the target could be found.</returns>
+    public bool RemoveTargetAt(int index) {
+        try {
+            Targets.RemoveAt(index);
+            return true;
+        } catch (IndexOutOfRangeException) {
+            return false;
+        }
     }
 
     /// <summary>
     /// Removes a Target.
     /// </summary>
-    /// <param name="type">The type of the target</param>
-    /// <returns>True if there was a target with that type.</returns>
-    public bool RemoveTarget(Type type) {
-        return Targets.Remove(type);
+    /// <param name="target">The target to remove.</param>
+    /// <returns>True if the target could be found.</returns>
+    public bool RemoveTarget(ITarget target) {
+        return RemoveTargetAt(GetTargetIndex(target));
+        
     }
 
     /// <summary>
@@ -201,27 +217,12 @@ public class Logger : IDisposable, IEquatable<Logger> {
         subLoggers.TryGetValue(childID, out Logger? logger);
         return logger;
     }
+
     private bool handlingUnhandledExceptions;
-    private string GetStacktrace(Exception e) {
-        string stackTrace = e.StackTrace ?? "   (Unknown)";
-        if (e.InnerException != null) {
-            Exception inner = e.InnerException;
-            string source = inner.Source == null ? "" : $" (in: {inner.Source})";
-            return stackTrace + $"\nCaused by {inner.GetType().FullName} : '{inner.Message}'{source}: \n{GetStacktrace(inner)}";
-        } else {
-            return stackTrace;
-        }
-    }
+
     private void HandleException(object sender, UnhandledExceptionEventArgs args) {
         Exception e = (Exception) args.ExceptionObject;
-        string source = e.Source == null ? "" : $" (in: {e.Source})";
-        string message = $"Unhandled Exception : {e.GetType().Name} ({e.GetType().FullName}) : '{e.Message}'\nTrace{source}:\n{GetStacktrace(e)}";
-        
-        if (e.HelpLink != null) {
-            message += "\n\nHelp: "+e.HelpLink;
-        }
-        
-        Log(args.IsTerminating ? Severity.Fatal : Severity.Error, message);
+        LogException(e, args.IsTerminating ? Severity.Fatal : Severity.Error, true);
     }
 
     /// <summary>
@@ -251,11 +252,28 @@ public class Logger : IDisposable, IEquatable<Logger> {
         DateTime time = DateTime.Now;
         OnLog?.Invoke(this, text?.ToString()??"", severity, time);
         if (((byte)severity) > ((byte)logLevel)) { return; }
-        foreach (KeyValuePair<Type, (ITarget target, bool enabled)> target in Targets) {
-            if (target.Value.enabled) {
-                target.Value.target.Write(severity, time, this, text);
+        foreach ((ITarget target, bool enabled) target in Targets) {
+            if (target.enabled) {
+                target.target.Write(severity, time, this, text);
             }
         }
+    }
+
+    /// <summary>
+    /// Logs something with Trace severity.
+    /// </summary>
+    /// <typeparam name="T">The type of the data.</typeparam>
+    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
+    public void LogTrace<T>(T? text) {
+        Log(Severity.Trace, text);
+    }
+    /// <summary>
+    /// Logs something with Debug severity.
+    /// </summary>
+    /// <typeparam name="T">The type of the data.</typeparam>
+    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
+    public void LogDebug<T>(T? text) {
+        Log(Severity.Debug, text);
     }
     /// <summary>
     /// Logs something with Info severity.
@@ -264,6 +282,22 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
     public void LogInfo<T>(T? text) {
         Log(Severity.Info, text);
+    }
+    /// <summary>
+    /// Logs something with Message severity.
+    /// </summary>
+    /// <typeparam name="T">The type of the data.</typeparam>
+    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
+    public void LogMessage<T>(T? text) {
+        Log(Severity.Message, text);
+    }
+    /// <summary>
+    /// Logs something with Warning severity.
+    /// </summary>
+    /// <typeparam name="T">The type of the data.</typeparam>
+    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
+    public void LogWarning<T>(T? text) {
+        Log(Severity.Warning, text);
     }
     /// <summary>
     /// Logs something with Error severity.
@@ -281,37 +315,35 @@ public class Logger : IDisposable, IEquatable<Logger> {
     public void LogFatal<T>(T? text) {
         Log(Severity.Fatal, text);
     }
-    /// <summary>
-    /// Logs something with Warning severity.
-    /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogWarning<T>(T? text) {
-        Log(Severity.Warning, text);
+
+    private string GetStacktrace(Exception e) {
+        string stackTrace = e.StackTrace ?? "   (Unknown)";
+        if (e.InnerException != null) {
+            Exception inner = e.InnerException;
+            string source = inner.Source == null ? string.Empty : $" (in: {inner.Source})";
+            return stackTrace + $"\nCaused by {inner.GetType().FullName} : '{inner.Message}'{source}: \n{GetStacktrace(inner)}";
+        } else {
+            return stackTrace;
+        }
     }
     /// <summary>
-    /// Logs something with Debug severity.
+    /// Logs an exception with a custom format.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogDebug<T>(T? text) {
-        Log(Severity.Debug, text);
+    /// <param name="e">The exception to log.</param>
+    /// <param name="severity">The severity of that exception.</param>
+    public void LogException(Exception e, Severity severity = Severity.Error) {
+        LogException(e, severity, false);
     }
-    /// <summary>
-    /// Logs something with Message severity.
-    /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogMessage<T>(T? text) {
-        Log(Severity.Message, text);
-    }
-    /// <summary>
-    /// Logs something with Trace severity.
-    /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogTrace<T>(T? text) {
-        Log(Severity.Trace, text);
+    private void LogException(Exception e, Severity severity, bool unhandled) {
+        string source = e.Source == null ? string.Empty : $" (in: {e.Source})";
+        string unhandledStr = unhandled?"Unhandled Exception : " : string.Empty;
+        string message = $"{unhandledStr}{e.GetType().Name} ({e.GetType().FullName}) : '{e.Message}'\nTrace{source}:\n{GetStacktrace(e)}";
+        
+        if (e.HelpLink != null) {
+            message += "\n\nHelp: "+e.HelpLink;
+        }
+        
+        Log(severity, message);
     }
 
     /// <summary>
@@ -324,7 +356,7 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// <param name="targets">The targets of the new sub logger (default: Targets of parent).</param>
     /// <returns>The created sub logger.</returns>
     /// <exception cref="ArgumentException" />
-    public SubLogger CreateSubLogger(string id, string name = "Sublogger", bool shouldRegister = true, Severity severity = Severity.Info, Dictionary<Type, ITarget>? targets = null) {
+    public SubLogger CreateSubLogger(string id, string name = "Sublogger", bool shouldRegister = true, Severity severity = Severity.Info, List<ITarget>? targets = null) {
         SubLogger subLogger = new(this, id, name, (ID != null && shouldRegister) ? ID+'.'+id : null, severity, targets);
         subLoggers.Add(id, subLogger);
         return subLogger;
@@ -336,8 +368,9 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// </remarks>
     public void Dispose() {
         Loggers.UnRegister(this);
-        foreach (KeyValuePair<Type, (ITarget target, bool enabled)> target in Targets) {
-            target.Value.target.Dispose();
+
+        foreach ((ITarget target, _) in Targets) {
+            target.Dispose();
         }
 
         foreach (KeyValuePair<string, Logger> subLogger in subLoggers) {
