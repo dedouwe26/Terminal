@@ -4,12 +4,12 @@ namespace OxDED.Terminal.Arguments;
 /// An callback for when an argument has been parsed.
 /// </summary>
 /// <param name="argument">The argument that has been parsed.</param>
-public delegate void ArgumentCallback(Argument argument);
+public delegate void OptionCallback(Option argument);
 /// <summary>
 /// An callback for when an postitional argument has been parsed.
 /// </summary>
 /// <param name="argument">The positional argument that has been parsed.</param>
-public delegate void PositionalArgumentCallback(PositionalArgument argument);
+public delegate void ArgumentCallback(Argument argument);
 /// <summary>
 /// An callback for when the parsing has failed.
 /// </summary>
