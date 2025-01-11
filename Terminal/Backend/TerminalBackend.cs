@@ -31,9 +31,52 @@ public interface ITerminalBackend : IDisposable {
     /// </summary>
     public Encoding ErrorEncoding { get; set; }
     /// <summary>
+    /// Hides the cursor in the terminal.
+    /// </summary>
+    public bool HideCursor { get; set; }
+    /// <summary>
+    /// True if this backend should listen for keypresses.
+    /// </summary>
+    public bool ListenForKeys { get; set; }
+    /// <summary>
+    /// An event for when a key is pressed.
+    /// </summary>
+    public static event KeyPressCallback? OnKeyPress;
+    /// <summary>
     /// The width and the height (in characters) of the terminal.
     /// </summary>
     public (int Width, int Height) Size { get; set; }
+    /// <summary>
+    /// The position of the cursor in the terminal.
+    /// </summary>
+    public (int X, int Y) CursorPosition { get; set; }
+    /// <summary>
+    /// Waits until a key is pressed.
+    /// </summary>
+    public void WaitForKeyPress();
+    /// <summary>
+    /// Method in new thread that should call <see cref="OnKeyPress"/> when a key is pressed.
+    /// </summary>
+    protected void ListenForKeysMethod();
+    /// <summary>
+    /// Clears (resets) the whole screen.
+    /// </summary>
+    public void Clear();
+    /// <summary>
+    /// Clears screen from the position to end of the screen.
+    /// </summary>
+    /// <param name="start">The start position.</param>
+    public void ClearFrom((int x, int y) start);
+    /// <summary>
+    /// Clears (deletes) a line.
+    /// </summary>
+    /// <param name="line">The y-axis of the line.</param>
+    public void ClearLine(int line);
+    /// <summary>
+    /// Clears the line from the position to the end of the line.
+    /// </summary>
+    /// <param name="start">The start position.</param>
+    public void ClearLineFrom((int x, int y) start);
 
 }
 
@@ -57,7 +100,10 @@ public abstract class TerminalBackend : ITerminalBackend {
     public abstract Encoding OutputEncoding { get; set; }
 
     /// <inheritdoc/>
-    public virtual Encoding ErrorEncoding { get; set; }
+    /// <remarks>
+    /// Defaults to setting and getting the <see cref="OutputEncoding"/>.
+    /// </remarks>
+    public virtual Encoding ErrorEncoding { get { return OutputEncoding; } set { OutputEncoding = value; } }
 
     /// <inheritdoc/>
     public virtual (int Width, int Height) Size { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -107,23 +153,6 @@ public abstract class TerminalBackend : ITerminalBackend {
         StandardError.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
-    /// Sets the cursor to that position.
-    /// </summary>
-    /// <param name="pos">The position.</param>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public virtual void Goto((int x, int y) pos) {
-        try {
-            if (pos.x >= Size.Width || pos.x < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos x is higher than the width or is lower than 0."); }
-            if (pos.y >= Size.Height || pos.y < 0) { throw new ArgumentOutOfRangeException(nameof(pos), "pos y is higher than the height or is lower than 0."); }
-        } catch (NotImplementedException) { }
-        StandardOutput.Write(ANSI.MoveCursor(pos.x, pos.y));
-    }
-    /// <summary>
-    /// Gets the cursor position.
-    /// </summary>
-    /// <returns>The cursor position.</returns>
-    public abstract (int x, int y) GetCursorPosition();
-    /// <summary>
     /// Sets the something (<see cref="object.ToString"/>) at a <paramref name="pos"/>, with a <paramref name="style"/>.
     /// </summary>
     /// <typeparam name="T">The type of what to write.</typeparam>
@@ -131,7 +160,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="pos">The position to set <paramref name="text"/> at.</param>
     /// <param name="style">The text decoration to use.</param>
     public virtual void Set<T>(T? text, (int x, int y) pos, Style? style = null) {
-        Goto(pos);
+        CursorPosition = pos;
         Write(text, style);
     }
 
@@ -143,7 +172,7 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// <param name="pos">The position to set <paramref name="text"/> at.</param>
     /// <param name="style">The text decoration to use.</param>
     public virtual void SetError<T>(T? text, (int x, int y) pos, Style? style = null) {
-        Goto(pos);
+        CursorPosition = pos;
         WriteError(text, style);
     }
     /// <summary>
@@ -184,15 +213,15 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// Clears (resets) the whole screen.
     /// </summary>
     public virtual void Clear() {
-        Goto((0,0));
+        CursorPosition = (0, 0);
         StandardOutput.Write(ANSI.EraseScreenFromCursor);
     }
     /// <summary>
     /// Clears screen from the position to end of the screen.
     /// </summary>
-    /// <param name="pos">The start position.</param>
-    public virtual void ClearFrom((int x, int y) pos) {
-        Goto(pos);
+    /// <param name="start">The start position.</param>
+    public virtual void ClearFrom((int x, int y) start) {
+        CursorPosition = start;
         StandardOutput.Write(ANSI.EraseLineFromCursor);
     }
     /// <summary>
@@ -200,15 +229,15 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// </summary>
     /// <param name="line">The y-axis of the line.</param>
     public virtual void ClearLine(int line) {
-        Goto((0, line));
+        CursorPosition = (0, line);
         StandardOutput.Write(ANSI.EraseLine);
     }
     /// <summary>
     /// Clears the line from the position to the end of the line.
     /// </summary>
-    /// <param name="pos">The start position.</param>
-    public virtual void ClearLineFrom((int x, int y) pos) {
-        Goto(pos);
+    /// <param name="start">The start position.</param>
+    public virtual void ClearLineFrom((int x, int y) start) {
+        CursorPosition = start;
         StandardOutput.Write(ANSI.EraseLineFromCursor);
     }
     /// <summary>
@@ -219,6 +248,8 @@ public abstract class TerminalBackend : ITerminalBackend {
     /// If this window is currently listening to keys.
     /// </summary>
     protected bool listenForKeys = false;
+    private (int X, int Y) CursorPosition { get; set; }
+
     /// <summary>
     /// If it should listen for keys.
     /// </summary>
@@ -233,6 +264,8 @@ public abstract class TerminalBackend : ITerminalBackend {
     } get {
         return listenForKeys;
     }}
+
+    public bool HideCursor { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     /// <summary>
     /// Method in new thread that should call <see cref="OnKeyPress"/> when a key is pressed.

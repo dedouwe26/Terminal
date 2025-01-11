@@ -1,7 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
 using OxDED.Terminal.Backend;
-using OxDED.Terminal.Window;
 
 namespace OxDED.Terminal;
 
@@ -19,11 +18,14 @@ public delegate void KeyPressCallback(ConsoleKey key, char keyChar, bool alt, bo
 /// Handles all the terminal stuff.
 /// </summary>
 public static class Terminal {
+    private static ITerminalBackend backend;
     static Terminal() {
+        backend = CreateBackend();
         OutEncoding = Encoding.UTF8;
         InEncoding = Encoding.UTF8;
+        BlockCancelKey = false;
         Console.CancelKeyPress+=(sender, e)=>{
-            e.Cancel = blockCancelKey;
+            e.Cancel = BlockCancelKey;
         };
     }
     private static Thread? listenForKeysThread;
@@ -45,23 +47,23 @@ public static class Terminal {
     /// <summary>
     /// If it should block CTRL + C.
     /// </summary>
-    public static bool blockCancelKey = false;
+    public static bool BlockCancelKey { get; set; }
     /// <summary>
     /// The out (to terminal) stream.
     /// </summary>
-    public static TextWriter Out {get { return Console.Out; } set { Console.SetOut(value); }}
+    public static TextWriter Out {get { return backend.StandardOutput; } }
     /// <summary>
     /// The in (from terminal) stream.
     /// </summary>
-    public static TextReader In {get { return Console.In; } set { Console.SetIn(value); }}
+    public static TextReader In {get { return backend.StandardInput; } }
     /// <summary>
     /// The error (to terminal) stream.
     /// </summary>
-    public static TextWriter Error {get { return Console.Error; } set { Console.SetError(value); }}
+    public static TextWriter Error {get { return backend.StandardError; } }
     /// <summary>
     /// Hides or shows terminal cursor.
     /// </summary>
-    public static bool HideCursor {set { Out.Write(value ? ANSI.CursorInvisible : ANSI.CursorVisible); }}
+    public static bool HideCursor { get => backend.HideCursor; set => backend.HideCursor = value; }
     /// <summary>
     /// The width (in characters) of the terminal.
     /// </summary>
@@ -81,15 +83,14 @@ public static class Terminal {
     /// <summary>
     /// Creates a new Terminal Window (Experimental).
     /// </summary>
-    /// <param name="title">The name of the window</param>
     /// <returns></returns>
     /// <exception cref="PlatformNotSupportedException"></exception>
-    public static TerminalBackend CreateBackend(string title) {
+    public static TerminalBackend CreateBackend() {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             return new WindowsBackend();
         } else {
+            // NOTE: Default to Dotnet implementation.
             return new ConsoleBackend();
-            throw new PlatformNotSupportedException("No implementation for your platform.");
         }
     }
     /// <summary>
@@ -185,14 +186,14 @@ public static class Terminal {
     /// <summary>
     /// Reads one character from the input stream.
     /// </summary>
-    /// <returns>The character that has been read (-1 if everything has been read).</returns>
+    /// <returns>The character that has been read (-1 if there is nothing to read).</returns>
     public static int Read() {
         return In.Read();
     }
     /// <summary>
     /// Reads a line from the input stream.
     /// </summary>
-    /// <returns>The line that has been read (null if everything has been read).</returns>
+    /// <returns>The line that has been read (null if there is nothing to read).</returns>
     public static string? ReadLine() {
         return In.ReadLine();
     }
@@ -220,7 +221,7 @@ public static class Terminal {
     /// <param name="pos">The start position.</param>
     public static void ClearFrom((int x, int y) pos) {
         Goto(pos);
-        Out.Write(ANSI.EraseLineFromCursor);
+        Out.Write(ANSI.EraseScreenFromCursor);
     }
     /// <summary>
     /// Clears (deletes) a line.
