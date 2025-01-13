@@ -45,11 +45,11 @@ class Program {
         Terminal.WriteLine();
 
         // Change name format of terminal target, can also be done with FileTarget:
-        subsublogger.GetTarget<TerminalTarget>().NameFormat = "{0} - {1}";
+        (subsublogger.GetTarget(0) as TerminalTarget)!.NameFormat = "{0} - {1}";
         subsublogger.LogDebug("<<< Different name format");
 
         // Change message format, can also be done with FileTarget:
-        sublogger2.GetTarget<TerminalTarget>().Format = "<{1}>: {3}: ({2}) : {5}{4}"+ANSI.Styles.ResetAll;
+        (sublogger2.GetTarget(0) as TerminalTarget)!.Format = "<{1}>: {3}: ({2}) : {5}{4}"+ANSI.Styles.ResetAll;
         sublogger2.LogDebug("Wow cool new format!");
 
         // Can listen for unhandled exceptions in the current app domain.

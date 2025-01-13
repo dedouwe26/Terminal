@@ -3,49 +3,60 @@ using OxDED.Terminal.Arguments;
 
 class Program {
     public static void Main(string[] args) {
-        // Create the argument parser.
-        ArgumentFormatter parser = new ArgumentFormatter()
-            .Name("Parser Example") // Sets a name.
-            .Description("Shows how you can you the ArgumentParser from 0xDED.Terminal.") // Sets the description.
-            .Version("1.0.0") // Sets the version (can set the custom keys for that).
-            .AddHelpOption() // Adds a help argument (can set the custom keys for that too) (-h, --help).
-            .AddVersionOption()
-            
-            .Option( // Adds an example argument (--test).
-                new("test", "Just an example."),
-                (Option arg) => { // Adds a callback for when it is used.
-                    Terminal.WriteLine("--test argument has been used.");
-                }
-            )
-            .Option( // Adds an example argument with multiple aliases (-f, --foo).
-                new(["f", "foo"], "Argument with Multiple keys.")
-            )
-            .Option( // Adds an example argument with parameters ()
-                new("bar", "This has parameters.", [
-                    new("para1", "This is the first parameter of --bar."),
-                    new("para2", "This is the second parameter of --bar.")
-                ])
-            )
-            .Argument( // Adds an required argument (at the first position).
-                new("value", "This is a positional argument (required).")
-            );
-        
-        parser.OnOption += (Option arg) => { // Adds an event for when an argument is used (same with OnPositionalArgument).
-            if (arg.keys.SequenceEqual(["f", "foo"])) { // Checks for a -f or --foo argument.
-                Terminal.WriteLine("The --foo, -f argument has been used.");
-            }
-        };
-        
-        parser.Parse(args); // Parses the arguments.
-        Option? arg = parser.GetArgument("bar"); // Gets the --bar argument.
+        ArgumentParser parser = new ArgumentFormatter()
+            .Name("examples - Argument parsing") // NOTE: The name, version and description are used by 
+            .Version("1.0.0")                    //       the help and version commands.
+            .Description("Shows how argument parsing works.")
 
-        if (arg != null) { // If there is a --bar argument.
-            if (arg.HasValue) { // If that agrument is also given.
-                Terminal.WriteLine($"Bar argument has been used ({arg.parameters[0].Value}, {arg.parameters[1].Value})."); // Gets the parameters of that argument.
-            }
-        }
+            //   Arguments | Options
+            // - required  | Not required
+            // - positional| Not positional
+            // - No keys   | Uses keys
 
-        Terminal.WriteLine(parser.GetArgument(0)!.Value); // Writes the postional argument
+            .Argument() // Starts a new argument.
+                .Name("first") // The name of the argument. NOTE: This is used in the help menu.
+                .Description("This is the first argument.")
+            .Finish() // Stops and saves the new argument.
 
+            .Option() // Starts a new option.
+                .Keys(["a", "first"]) // The keys used to declare this option.
+                .Description("This is the first option.") // The description of the first option.
+            .Finish() // Stops and saves the new option.
+            .Option() // Creates another option.
+                .Key("b").Key("second") 
+                .Description("This is the second option.")
+            .Finish()
+            .Option() // Creates the third option.
+                .Key("c")
+                .Description("First option with parameters.")
+                .Parameter() // Creates a new required parameter.
+                    .Name("first") // The name of this parameter.
+                    .Description("First parameter.") // The description of this parameter.
+                .Finish()
+            .Finish()
+
+            .HelpOption() // Creates a help option.
+                // .Key("d") // The keys default to: ["h", "help"]. NOTE: The description has a default too.
+                // .Quit(false) // The program quits by default when the help option is used.
+            .Finish()
+            .VersionOption() // Creates a version option.
+                // .Key("d") // The keys default to: ["v", "version"]. NOTE: The description has a default too.
+                // .Quit(false) // The program quits by default when the help option is used.
+            .Finish()
+        .Finish();
+
+        parser.Parse(args);
+
+        // Commands to try out:
+        // - Args.exe "Hello, world!" --first --bc Required
+        // - Args.exe "argument" -ab -c "parameter"     NOTE: "-ab" is the same thing as: "-a -b".
+        // - Args.exe -h
+        // - Args.exe --version
+
+        Terminal.WriteLine(parser.GetArgument(0)!.Content); // NOTE: Can use !, because there is an argument.
+        Terminal.WriteLine("Is '--first' used        : "+parser.HasKeyBeenUsed("first"));
+        Terminal.WriteLine("Is the second option used: "+parser.HasOption("second"));
+        string? parameter = parser.GetOption("c")?.Parameters?[0];
+        Terminal.WriteLine("Third option's parameter : "+(parameter ?? "(not used)").ToString());
     }
 }
