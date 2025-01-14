@@ -1,5 +1,5 @@
-namespace OxDED.Terminal.Arguments;
+// namespace OxDED.Terminal.Arguments;
 
-public class ArgumentCategory {
+// public class ArgumentCategory {
     
-}
+// }

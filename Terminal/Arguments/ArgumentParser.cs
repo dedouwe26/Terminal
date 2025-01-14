@@ -208,11 +208,11 @@ public class ArgumentParser {
         Options = [.. parser.Options];
         Arguments = [.. parser.Arguments];
 
-        if (HasOption(Format.CurrentHelpOption)) {
+        if (Format.CurrentHelpOption != null && HasOption(Format.CurrentHelpOption)) {
             ShowHelp();
             if (Format.CurrentHelpOption.quit) Environment.Exit(0);
         }
-        if (HasOption(Format.CurrentVersionOption)) {
+        if (Format.CurrentVersionOption != null && HasOption(Format.CurrentVersionOption)) {
             ShowVersion();
             if (Format.CurrentVersionOption.quit) Environment.Exit(0);
         }

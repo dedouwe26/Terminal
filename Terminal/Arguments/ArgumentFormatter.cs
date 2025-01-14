@@ -4,9 +4,21 @@ namespace OxDED.Terminal.Arguments;
 /// Represents a format for arguments and options.
 /// </summary>
 public partial class ArgumentFormatter {
+    /// <summary>
+    /// Whether the program should quit when a parsing error occured.
+    /// </summary>
     public bool shouldExitOnError = true;
+    /// <summary>
+    /// The name of this application. Used by the version menu and help menu.
+    /// </summary>
     public string? name;
+    /// <summary>
+    /// The description of this application. Used by the version menu and help menu.
+    /// </summary>
     public string? description;
+    /// <summary>
+    /// The version of this application. Used by the version menu and help menu.
+    /// </summary>
     public string? version;
     
     /// <summary>
@@ -26,37 +38,77 @@ public partial class ArgumentFormatter {
         Arguments = arguments ?? [];
     }
 
+    /// <summary>
+    /// Creates a new option.
+    /// </summary>
+    /// <returns>The new option format.</returns>
     public OptionFormat Option() {
         return new(this);
     }
+    /// <summary>
+    /// Creates a new argument.
+    /// </summary>
+    /// <returns>The new argument format.</returns>
     public ArgumentFormat Argument() {
         return new(this);
     }
-
+    /// <summary>
+    /// Sets whether the program should quit when a parsing error occured.
+    /// </summary>
+    /// <param name="shouldExit">True if it should quit.</param>
+    /// <returns>This argument formatter.</returns>
     public ArgumentFormatter ShouldExitOnError(bool shouldExit) {
         shouldExitOnError = shouldExit;
         return this;
     }
-    public ArgumentFormatter Name(string name) {
+    /// <summary>
+    /// Sets the name of this application. Used by the version menu and help menu.
+    /// </summary>
+    /// <param name="name">The name of the application.</param>
+    /// <returns>This argument formatter.</returns>
+    public ArgumentFormatter Name(string? name) {
         this.name = name;
         return this;
     }
+    /// <summary>
+    /// Sets the description of this application. Used by the version menu and help menu.
+    /// </summary>
+    /// <param name="description">The description of the application.</param>
+    /// <returns>This argument formatter.</returns>
     public ArgumentFormatter Description(string? description) {
         this.description = description;
         return this;
     }
+    /// <summary>
+    /// Sets the version of this application. Used by the version menu and help menu.
+    /// </summary>
+    /// <param name="version">The version of the application.</param>
+    /// <returns>This argument formatter.</returns>
     public ArgumentFormatter Version(string? version) {
         this.version = version;
         return this;
     }
 
-    public HelpOptionFormat CurrentHelpOption { get; internal set; }
+    /// <summary>
+    /// The currently used help option.
+    /// </summary>
+    public HelpOptionFormat? CurrentHelpOption { get; internal set; }
+    /// <summary>
+    /// The currently used version option.
+    /// </summary>
+    public VersionOptionFormat? CurrentVersionOption { get; internal set; }
 
-    public VersionOptionFormat CurrentVersionOption { get; internal set; }
-
+    /// <summary>
+    /// Sets a new help option.
+    /// </summary>
+    /// <returns>The help option format.</returns>
     public HelpOptionFormat HelpOption() {
         return new HelpOptionFormat(this);
     }
+    /// <summary>
+    /// Sets a new version option.
+    /// </summary>
+    /// <returns>The version option format.</returns>
     public VersionOptionFormat VersionOption() {
         return new VersionOptionFormat(this);
     }
@@ -180,7 +232,7 @@ public partial class ArgumentFormatter {
         /// <summary>
         /// Adds a new parameter to this option.
         /// </summary>
-        /// <returns>The parameter formatter.</returns>
+        /// <returns>The parameter format.</returns>
         public virtual ParameterFormat Parameter() {
             return new(this);
         }
