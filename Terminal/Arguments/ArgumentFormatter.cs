@@ -3,7 +3,7 @@ namespace OxDED.Terminal.Arguments;
 /// <summary>
 /// Represents a format for arguments and options.
 /// </summary>
-public partial class ArgumentFormatter {
+public class ArgumentFormatter : IFormatContainer {
     /// <summary>
     /// Whether the program should quit when a parsing error occured.
     /// </summary>
@@ -28,11 +28,17 @@ public partial class ArgumentFormatter {
     /// <summary>
     /// The arguments of this format.
     /// </summary>
-    public readonly  List<ArgumentFormat> Arguments;
+    public readonly List<ArgumentFormat> Arguments;
+
+    List<OptionFormat> IFormatContainer.Options => Options;
+
+    List<ArgumentFormat> IFormatContainer.Arguments => Arguments;
 
     /// <summary>
     /// Creates a new argument format.
     /// </summary>
+    /// <param name="arguments">The predetermined arguments (optional).</param>
+    /// <param name="options">The predetermined options (optional).</param>
     public ArgumentFormatter(List<ArgumentFormat>? arguments = null, List<OptionFormat>? options = null) {
         Options = options ?? [];
         Arguments = arguments ?? [];
@@ -122,178 +128,174 @@ public partial class ArgumentFormatter {
     }
 }
 
-public partial class ArgumentFormatter {
+/// <summary>
+/// Represents a format for an argument.
+/// </summary>
+public class ArgumentFormat {
     /// <summary>
-    /// Represents a format for an argument.
+    /// The description of this argument. Used by the help menu.
     /// </summary>
-    public class ArgumentFormat {
+    public string description = "";
+    
+    /// <summary>
+    /// The name of this argument. Used by the help menu.
+    /// </summary>
+    public string name = "";
+    
+    /// <summary>
+    /// The parent format.
+    /// </summary>
+    public readonly IFormatContainer Container;
+
+    internal ArgumentFormat(IFormatContainer container) {
+        Container = container;
+    }
+    /// <summary>
+    /// Sets the name of this argument.
+    /// </summary>
+    /// <param name="name">The new name.</param>
+    /// <returns>This argument.</returns>
+    public ArgumentFormat Name(string name) {
+        this.name = name;
+        return this;
+    }
+    /// <summary>
+    /// Sets the description of this argument.
+    /// </summary>
+    /// <param name="description">The new description.</param>
+    /// <returns>This argument.</returns>
+    public ArgumentFormat Description(string description) {
+        this.description = description;
+        return this;
+    }
+
+    /// <summary>
+    /// Finishes and saves this argument format.
+    /// </summary>
+    /// <returns>The parent.</returns>
+    public ArgumentFormatter Finish() {
+        Container.Arguments.Add(this);
+        return ArgumentFormatter;
+    }
+}
+
+/// <summary>
+/// Represents a format for an option.
+/// </summary>
+public class OptionFormat {
+    /// <summary>
+    /// All the keys of this option.
+    /// </summary>
+    public readonly List<string> keys = [];
+    /// <summary>
+    /// The description of this argument. Used by the help menu.
+    /// </summary>
+    public string description = "";
+    /// <summary>
+    /// All the parameters of this option.
+    /// </summary>
+    public readonly List<ParameterFormat> parameters = [];
+
+    /// <summary>
+    /// The parent format.
+    /// </summary>
+    public readonly IFormatContainer Container;
+
+    internal OptionFormat(IFormatContainer container) {
+        Container = container;
+    }
+
+    /// <summary>
+    /// Adds a key to check for.
+    /// </summary>
+    /// <param name="key">The new key.</param>
+    /// <returns>This option.</returns>
+    public virtual OptionFormat Key(string key) {
+        keys.Add(key);
+        return this;
+    }
+    /// <summary>
+    /// Adds keys to check for.
+    /// </summary>
+    /// <param name="keys">The new keys to add.</param>
+    /// <returns>This option.</returns>
+    public virtual OptionFormat Keys(IEnumerable<string> keys) {
+        this.keys.AddRange(keys);
+        return this;
+    }
+    /// <summary>
+    /// Sets the description of this option.
+    /// </summary>
+    /// <param name="description">The new description.</param>
+    /// <returns>This option.</returns>
+    public virtual OptionFormat Description(string description) {
+        this.description = description;
+        return this;
+    }
+    /// <summary>
+    /// Adds a new parameter to this option.
+    /// </summary>
+    /// <returns>The parameter format.</returns>
+    public virtual ParameterFormat Parameter() {
+        return new(this);
+    }
+
+    /// <summary>
+    /// Finishes and saves this option format.
+    /// </summary>
+    /// <returns>The parent.</returns>
+    public virtual ArgumentFormatter Finish() {
+        Container.Options.Add(this);
+        return ArgumentFormatter;
+    }
+    /// <summary>
+    /// Represents a format for an option's parameter.
+    /// </summary>
+    public class ParameterFormat {
+        /// <summary>
+        /// The name of this parameter. Used by the help menu.
+        /// </summary>
+        public string name = "";
         /// <summary>
         /// The description of this argument. Used by the help menu.
         /// </summary>
         public string description = "";
-        
-        /// <summary>
-        /// The name of this argument. Used by the help menu.
-        /// </summary>
-        public string name = "";
-        
+
         /// <summary>
         /// The parent format.
         /// </summary>
-        public readonly ArgumentFormatter ArgumentFormatter;
+        public readonly OptionFormat OptionFormat;
 
-        internal ArgumentFormat(ArgumentFormatter argumentFormatter) {
-            ArgumentFormatter = argumentFormatter;
+        internal ParameterFormat(OptionFormat optionBuilder) {
+            OptionFormat = optionBuilder;
         }
+
         /// <summary>
-        /// Sets the name of this argument.
+        /// Sets the name of this parameter.
         /// </summary>
         /// <param name="name">The new name.</param>
-        /// <returns>This argument.</returns>
-        public ArgumentFormat Name(string name) {
+        /// <returns>This parameter.</returns>
+        public ParameterFormat Name(string name) {
             this.name = name;
             return this;
         }
         /// <summary>
-        /// Sets the description of this argument.
+        /// Sets the description of this parameter.
         /// </summary>
         /// <param name="description">The new description.</param>
-        /// <returns>This argument.</returns>
-        public ArgumentFormat Description(string description) {
+        /// <returns>This parameter.</returns>
+        public ParameterFormat Description(string description) {
             this.description = description;
             return this;
         }
 
         /// <summary>
-        /// Finishes and saves this argument format.
+        /// Finishes and saves this parameter format.
         /// </summary>
         /// <returns>The parent.</returns>
-        public ArgumentFormatter Finish() {
-            ArgumentFormatter.Arguments.Add(this);
-            return ArgumentFormatter;
-        }
-    }
-}
-
-public partial class ArgumentFormatter {
-    /// <summary>
-    /// Represents a format for an option.
-    /// </summary>
-    public class OptionFormat {
-        /// <summary>
-        /// All the keys of this option.
-        /// </summary>
-        public readonly List<string> keys = [];
-        /// <summary>
-        /// The description of this argument. Used by the help menu.
-        /// </summary>
-        public string description = "";
-        /// <summary>
-        /// All the parameters of this option.
-        /// </summary>
-        public readonly List<ParameterFormat> parameters = [];
-
-        /// <summary>
-        /// The parent format.
-        /// </summary>
-        public readonly ArgumentFormatter ArgumentFormatter;
-
-        internal OptionFormat(ArgumentFormatter argumentFormatter) {
-            ArgumentFormatter = argumentFormatter;
-        }
-
-        /// <summary>
-        /// Adds a key to check for.
-        /// </summary>
-        /// <param name="key">The new key.</param>
-        /// <returns>This option.</returns>
-        public virtual OptionFormat Key(string key) {
-            keys.Add(key);
-            return this;
-        }
-        /// <summary>
-        /// Adds keys to check for.
-        /// </summary>
-        /// <param name="keys">The new keys to add.</param>
-        /// <returns>This option.</returns>
-        public virtual OptionFormat Keys(IEnumerable<string> keys) {
-            this.keys.AddRange(keys);
-            return this;
-        }
-        /// <summary>
-        /// Sets the description of this option.
-        /// </summary>
-        /// <param name="description">The new description.</param>
-        /// <returns>This option.</returns>
-        public virtual OptionFormat Description(string description) {
-            this.description = description;
-            return this;
-        }
-        /// <summary>
-        /// Adds a new parameter to this option.
-        /// </summary>
-        /// <returns>The parameter format.</returns>
-        public virtual ParameterFormat Parameter() {
-            return new(this);
-        }
-
-        /// <summary>
-        /// Finishes and saves this option format.
-        /// </summary>
-        /// <returns>The parent.</returns>
-        public virtual ArgumentFormatter Finish() {
-            ArgumentFormatter.Options.Add(this);
-            return ArgumentFormatter;
-        }
-        /// <summary>
-        /// Represents a format for an option's parameter.
-        /// </summary>
-        public class ParameterFormat {
-            /// <summary>
-            /// The name of this parameter. Used by the help menu.
-            /// </summary>
-            public string name = "";
-            /// <summary>
-            /// The description of this argument. Used by the help menu.
-            /// </summary>
-            public string description = "";
-
-            /// <summary>
-            /// The parent format.
-            /// </summary>
-            public readonly OptionFormat OptionFormat;
-
-            internal ParameterFormat(OptionFormat optionBuilder) {
-                OptionFormat = optionBuilder;
-            }
-
-            /// <summary>
-            /// Sets the name of this parameter.
-            /// </summary>
-            /// <param name="name">The new name.</param>
-            /// <returns>This parameter.</returns>
-            public ParameterFormat Name(string name) {
-                this.name = name;
-                return this;
-            }
-            /// <summary>
-            /// Sets the description of this parameter.
-            /// </summary>
-            /// <param name="description">The new description.</param>
-            /// <returns>This parameter.</returns>
-            public ParameterFormat Description(string description) {
-                this.description = description;
-                return this;
-            }
-
-            /// <summary>
-            /// Finishes and saves this parameter format.
-            /// </summary>
-            /// <returns>The parent.</returns>
-            public OptionFormat Finish() {
-                OptionFormat.parameters.Add(this);
-                return OptionFormat;
-            }
+        public OptionFormat Finish() {
+            OptionFormat.parameters.Add(this);
+            return OptionFormat;
         }
     }
 }
@@ -301,7 +303,7 @@ public partial class ArgumentFormatter {
 /// <summary>
 /// Represents a configurable help option.
 /// </summary>
-public class HelpOptionFormat : ArgumentFormatter.OptionFormat {
+public class HelpOptionFormat : OptionFormat {
     internal HelpOptionFormat(ArgumentFormatter argumentFormatter) : base(argumentFormatter) {
         Keys(["h", "help"]).Description("Displays this help page.");
     }
@@ -328,7 +330,7 @@ public class HelpOptionFormat : ArgumentFormatter.OptionFormat {
 /// <summary>
 /// Represents a configurable version option.
 /// </summary>
-public class VersionOptionFormat : ArgumentFormatter.OptionFormat {
+public class VersionOptionFormat : OptionFormat {
     internal VersionOptionFormat(ArgumentFormatter argumentFormatter) : base(argumentFormatter) {
         Keys(["v", "version"]).Description("Displays the version and description of this program.");
     }
@@ -347,7 +349,7 @@ public class VersionOptionFormat : ArgumentFormatter.OptionFormat {
     }
     /// <inheritdoc/>
     public override ArgumentFormatter Finish() {
-        ArgumentFormatter.CurrentVersionOption = this;
+        Container.CurrentVersionOption = this;
         return base.Finish();
     }
 }
