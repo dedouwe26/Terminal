@@ -13,7 +13,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>Terminal;library;console;logging;keyboard;ansi;argparser</PackageTags>
     <PackageDescription>Terminal is a C# library for managing everything in the terminal, it's an alternative of Console, and it can be used for tui applications. It also supports logging, windowing (experimental) and argument parsing.</PackageDescription>
-    <RepositoryUrl>https://github.com/dedouwe26/Terminal.git</RepositoryUrl> 
+    <RepositoryUrl>https://github.com/dedouwe26/Terminal.git</RepositoryUrl>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>

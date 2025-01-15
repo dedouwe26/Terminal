@@ -6,33 +6,30 @@ class Program {
         // * Using style.
         Terminal.WriteLine("Red", new Style{ForegroundColor = Color.Red});
 
-        // Will reset to default color (used many times).
-        string defaultColor = ((Color)Colors.Default).ToForegroundANSI();
-
         // Random byte for terminal-generated color table.
         byte[] randomBytes = new byte[1];
         Random.Shared.NextBytes(randomBytes);
 
         // Printing out all the terminal-defined colors
         foreach (Colors color in Enum.GetValues<Colors>()) {
-            Terminal.Write(color.ToString()+' ', new Style() { ForegroundColor = new Color(color)});
+            Terminal.Write(color.ToString()+' ', new Style() { ForegroundColor = color});
         }
 
         Terminal.WriteLine();
 
         // * In string formatting.
         Terminal.WriteLine(
-            @$"{Color.Green.ToForegroundANSI()}Green{defaultColor}{"\t\t"}{ANSI.Styles.Blink}Blinking{ANSI.Styles.ResetBlink}
-{Color.Blue.ToForegroundANSI()}Blue{defaultColor}{"\t\t"}{ANSI.Styles.Bold}Bold{ANSI.Styles.ResetBold}
-{Color.LightRed.ToForegroundANSI()}LightRed{defaultColor}{"\t"}{ANSI.Styles.Faint}Faint{ANSI.Styles.ResetFaint}
-{Color.DarkGreen.ToForegroundANSI()}DarkGreen{defaultColor}{"\t"}{ANSI.Styles.Underline}Underline{ANSI.Styles.ResetUnderline}
-{Color.DarkBlue.ToForegroundANSI()}DarkBlue{defaultColor}{"\t"}{ANSI.Styles.DoubleUnderline}DoubleUnderLine?{ANSI.Styles.ResetDoubleUnderline}
-{Color.Yellow.ToForegroundANSI()}Yellow{defaultColor}{"\t\t"}{ANSI.Styles.Striketrough}Striketrough{ANSI.Styles.ResetStriketrough}
-{Color.Orange.ToForegroundANSI()}Orange{defaultColor}{"\t\t"}{ANSI.Styles.Inverse}Inverse{ANSI.Styles.ResetInverse}
-{Color.White.ToForegroundANSI()}White{defaultColor}{"\t\t"}{ANSI.Styles.Invisible}Invisible, you dont see me!{ANSI.Styles.ResetInvisible}
-{Color.Gray.ToForegroundANSI()}Gray{defaultColor}{"\t\t"}{ANSI.Styles.Italic}Italic{ANSI.Styles.ResetItalic}
-{Color.Black.ToForegroundANSI()}Black{defaultColor}{"\t\t"}{new Color(randomBytes[0]).ToForegroundANSI()}Random color from the terminal-generated table.
-            "
+            new StyleBuilder()
+            .Foreground(Color.Green).Text("Green\t\t").ResetForeground()        .Blink().Text("Blinking").Blink(false).NewLine()
+            .Foreground(Color.Blue).Text("Blue\t\t").ResetForeground()          .Bold().Text("Bold").Bold(false).NewLine()
+            .Foreground(Color.LightRed).Text("LightRed\t").ResetForeground()    .Faint().Text("Faint").Faint(false).NewLine()
+            .Foreground(Color.DarkGreen).Text("DarkGreen\t").ResetForeground()  .Underline().Text("Underline").Underline(false).NewLine()
+            .Foreground(Color.DarkBlue).Text("DarkBlue\t").ResetForeground()    .DoubleUnderline().Text("DoubleUnderLine?").DoubleUnderline(false).NewLine()
+            .Foreground(Color.Yellow).Text("Yellow\t\t").ResetForeground()      .Striketrough().Text("Striketrough").Striketrough(false).NewLine()
+            .Foreground(Color.Orange).Text("Orange\t\t").ResetForeground()      .Inverse().Text("Inverse").Inverse(false).NewLine()
+            .Foreground(Color.White).Text("White\t\t").ResetForeground()        .Invisible().Text("Invisible, you dont see me!").Invisible(false).NewLine()
+            .Foreground(Color.Gray).Text("Gray\t\t").ResetForeground()          .Italic().Text("Italic").Italic(false).NewLine()
+            .Foreground(Color.Black).Text("Black\t\t").ResetForeground()        .Foreground(new Color(randomBytes[0])).Text("Random color from the terminal-generated table.").Blink(false).NewLine()
         );
 
         // Tests Interference with other styles.

@@ -12,18 +12,17 @@ public class Style : IEquatable<Style>, ICloneable {
     /// Interferes with <see cref="Bold"/>.
     /// </summary>
     public bool Faint = false;
-    /// 
+    ///
     public bool Italic = false;
-    /// 
+    ///
     public bool Underline = false;
-    /// 
+    ///
     public bool Blink = false;
-    /// 
+    ///
     public bool Inverse = false;
-    /// 
+    ///
     public bool Invisible = false;
-    /// <summary>
-    /// </summary>
+    ///
     public bool Striketrough = false;
     /// <summary>
     /// May only work in some terminals.
@@ -108,7 +107,7 @@ public class Style : IEquatable<Style>, ICloneable {
     /// Checks if the that color is identical to this one.
     /// </remarks>
     public override bool Equals(object? obj) {
-        return Equals(obj as Color);
+        return Equals(obj as Style);
     }
     /// <inheritdoc/>
     public override int GetHashCode() {
@@ -148,5 +147,9 @@ public class Style : IEquatable<Style>, ICloneable {
             ForegroundColor = ForegroundColor.CloneColor(),
             BackgroundColor = BackgroundColor.CloneColor()
         };
+    }
+    /// <inheritdoc/>
+    public override string ToString() {
+        return ToANSI();
     }
 }
