@@ -17,7 +17,7 @@ class Program {
 
         Terminal.WriteLine();
 
-        // * In string formatting.
+        // Using Style builder for multiple styles in one go.
         Terminal.WriteLine(
             new StyleBuilder()
             .Foreground(Color.Green).Text("Green\t\t").ResetForeground()        .Blink().Text("Blinking").Blink(false).NewLine()

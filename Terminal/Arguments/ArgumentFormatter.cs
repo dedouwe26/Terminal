@@ -1,9 +1,11 @@
+using System.Collections.ObjectModel;
+
 namespace OxDED.Terminal.Arguments;
 
 /// <summary>
 /// Represents a format for arguments and options.
 /// </summary>
-public class ArgumentFormatter : IFormatContainer {
+public class ArgumentFormatter {
     /// <summary>
     /// Whether the program should quit when a parsing error occured.
     /// </summary>
@@ -22,42 +24,67 @@ public class ArgumentFormatter : IFormatContainer {
     public string? version;
     
     /// <summary>
-    /// The options of this format.
+    /// All the categories.
     /// </summary>
-    public readonly List<OptionFormat> Options;
+    public readonly List<CategoryFormat> Categories = [];
+
+    internal List<ArgumentFormat>? allArguments;
     /// <summary>
-    /// The arguments of this format.
+    /// All the arguments in all categories.
     /// </summary>
-    public readonly List<ArgumentFormat> Arguments;
+    public ReadOnlyCollection<ArgumentFormat> AllArguments { get {
+        if (allArguments == null) {
+            allArguments = [];
+            foreach (CategoryFormat category in Categories) {
+                allArguments.AddRange(category.Arguments);
+            }
+        }
+        return allArguments.AsReadOnly();
+    } }
 
-    List<OptionFormat> IFormatContainer.Options => Options;
+    internal List<OptionFormat>? allOptions;
+    /// <summary>
+    /// All the arguments in all categories.
+    /// </summary>
+    public ReadOnlyCollection<OptionFormat> AllOptions { get {
+        if (allOptions == null) {
+            allOptions = [];
+            foreach (CategoryFormat category in Categories) {
+                allOptions.AddRange(category.Options);
+            }
+        }
+        return allOptions.AsReadOnly();
+    } }
 
-    List<ArgumentFormat> IFormatContainer.Arguments => Arguments;
+    private CategoryFormat? generalCategory;
+    /// <summary>
+    /// The general category. It is going to be created when you call the get method.
+    /// </summary>
+    public CategoryFormat GeneralCategory { get {
+        return generalCategory ??= new(this, "General");
+    } }
 
     /// <summary>
-    /// Creates a new argument format.
+    /// Uses the general category.
     /// </summary>
-    /// <param name="arguments">The predetermined arguments (optional).</param>
-    /// <param name="options">The predetermined options (optional).</param>
-    public ArgumentFormatter(List<ArgumentFormat>? arguments = null, List<OptionFormat>? options = null) {
-        Options = options ?? [];
-        Arguments = arguments ?? [];
+    /// <returns>The category format of the general category.</returns>
+    public CategoryFormat General() {
+        return GeneralCategory;
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public CategoryFormat Category() {
+        return new CategoryFormat(this);
     }
 
-    /// <summary>
-    /// Creates a new option.
-    /// </summary>
-    /// <returns>The new option format.</returns>
-    public OptionFormat Option() {
-        return new(this);
-    }
-    /// <summary>
-    /// Creates a new argument.
-    /// </summary>
-    /// <returns>The new argument format.</returns>
-    public ArgumentFormat Argument() {
-        return new(this);
-    }
+    // /// <summary>
+    // /// Creates a new argument format.
+    // /// </summary>
+    // public ArgumentFormatter() {
+    // }
+
     /// <summary>
     /// Sets whether the program should quit when a parsing error occured.
     /// </summary>
@@ -105,6 +132,65 @@ public class ArgumentFormatter : IFormatContainer {
     public VersionOptionFormat? CurrentVersionOption { get; internal set; }
 
     /// <summary>
+    /// Finishes formatting and creates a parser.
+    /// </summary>
+    /// <returns>A new argument parser.</returns>
+    public ArgumentParser Finish() {
+        return new(this);
+    }
+}
+
+/// <summary>
+/// A argument and option category. Used in the help menu.
+/// </summary>
+public class CategoryFormat {
+    /// <summary>
+    /// The name of the category.
+    /// </summary>
+    public string name;
+    /// <summary>
+    /// The arguments of this category.
+    /// </summary>
+    public readonly List<ArgumentFormat> Arguments = [];
+    /// <summary>
+    /// The arguments of this category.
+    /// </summary>
+    public readonly List<OptionFormat> Options = [];
+    /// <summary>
+    /// The parent format.
+    /// </summary>
+    public readonly ArgumentFormatter Parent;
+
+    internal CategoryFormat(ArgumentFormatter parent, string name = "Unnamed") {
+        Parent = parent;
+        this.name = name;
+    }
+
+    /// <summary>
+    /// Sets the name of the category.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public CategoryFormat Name(string name) {
+        this.name = name;
+        return this;
+    } 
+    /// <summary>
+    /// Creates a new option.
+    /// </summary>
+    /// <returns>The new option format.</returns>
+    public OptionFormat Option() {
+        return new(this);
+    }
+    /// <summary>
+    /// Creates a new argument.
+    /// </summary>
+    /// <returns>The new argument format.</returns>
+    public ArgumentFormat Argument() {
+        return new(this);
+    }
+
+    /// <summary>
     /// Sets a new help option.
     /// </summary>
     /// <returns>The help option format.</returns>
@@ -120,11 +206,13 @@ public class ArgumentFormatter : IFormatContainer {
     }
 
     /// <summary>
-    /// Finishes formatting and creates a parser.
+    /// Finishes and saves this category format.
     /// </summary>
-    /// <returns>A new argument parser.</returns>
-    public ArgumentParser Finish() {
-        return new(this);
+    /// <returns>The parent.</returns>
+    public ArgumentFormatter Finish() {
+        if (!Parent.Categories.Exists((CategoryFormat c) => ReferenceEquals(this, c)))
+            Parent.Categories.Add(this);
+        return Parent;
     }
 }
 
@@ -145,10 +233,10 @@ public class ArgumentFormat {
     /// <summary>
     /// The parent format.
     /// </summary>
-    public readonly IFormatContainer Container;
+    public readonly CategoryFormat Parent;
 
-    internal ArgumentFormat(IFormatContainer container) {
-        Container = container;
+    internal ArgumentFormat(CategoryFormat parent) {
+        Parent = parent;
     }
     /// <summary>
     /// Sets the name of this argument.
@@ -173,9 +261,10 @@ public class ArgumentFormat {
     /// Finishes and saves this argument format.
     /// </summary>
     /// <returns>The parent.</returns>
-    public ArgumentFormatter Finish() {
-        Container.Arguments.Add(this);
-        return ArgumentFormatter;
+    public CategoryFormat Finish() {
+        Parent.Arguments.Add(this);
+        Parent.Parent.allArguments = null;
+        return Parent;
     }
 }
 
@@ -199,10 +288,10 @@ public class OptionFormat {
     /// <summary>
     /// The parent format.
     /// </summary>
-    public readonly IFormatContainer Container;
+    public readonly CategoryFormat Parent;
 
-    internal OptionFormat(IFormatContainer container) {
-        Container = container;
+    internal OptionFormat(CategoryFormat parent) {
+        Parent = parent;
     }
 
     /// <summary>
@@ -244,9 +333,10 @@ public class OptionFormat {
     /// Finishes and saves this option format.
     /// </summary>
     /// <returns>The parent.</returns>
-    public virtual ArgumentFormatter Finish() {
-        Container.Options.Add(this);
-        return ArgumentFormatter;
+    public virtual CategoryFormat Finish() {
+        Parent.Options.Add(this);
+        Parent.Parent.allOptions = null;
+        return Parent;
     }
     /// <summary>
     /// Represents a format for an option's parameter.
@@ -304,7 +394,7 @@ public class OptionFormat {
 /// Represents a configurable help option.
 /// </summary>
 public class HelpOptionFormat : OptionFormat {
-    internal HelpOptionFormat(ArgumentFormatter argumentFormatter) : base(argumentFormatter) {
+    internal HelpOptionFormat(CategoryFormat argumentFormatter) : base(argumentFormatter) {
         Keys(["h", "help"]).Description("Displays this help page.");
     }
     /// <summary>
@@ -321,8 +411,8 @@ public class HelpOptionFormat : OptionFormat {
         return this;
     }
     /// <inheritdoc/>
-    public override ArgumentFormatter Finish() {
-        ArgumentFormatter.CurrentHelpOption = this;
+    public override CategoryFormat Finish() {
+        Parent.Parent.CurrentHelpOption = this;
         return base.Finish();
     }
 }
@@ -331,7 +421,7 @@ public class HelpOptionFormat : OptionFormat {
 /// Represents a configurable version option.
 /// </summary>
 public class VersionOptionFormat : OptionFormat {
-    internal VersionOptionFormat(ArgumentFormatter argumentFormatter) : base(argumentFormatter) {
+    internal VersionOptionFormat(CategoryFormat argumentFormatter) : base(argumentFormatter) {
         Keys(["v", "version"]).Description("Displays the version and description of this program.");
     }
     /// <summary>
@@ -348,8 +438,8 @@ public class VersionOptionFormat : OptionFormat {
         return this;
     }
     /// <inheritdoc/>
-    public override ArgumentFormatter Finish() {
-        Container.CurrentVersionOption = this;
+    public override CategoryFormat Finish() {
+        Parent.Parent.CurrentVersionOption = this;
         return base.Finish();
     }
 }

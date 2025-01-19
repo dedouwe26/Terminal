@@ -1,8 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Text;
-using static OxDED.Terminal.Arguments.ArgumentFormatter;
-using static OxDED.Terminal.Arguments.ArgumentFormatter.OptionFormat;
-
 namespace OxDED.Terminal.Arguments;
 
 /// <summary>
@@ -129,7 +124,7 @@ public class ArgumentParser {
                 // Read long option (--... ???)
                 string key = ReadPart($"No option name found after '{Identifier}{Identifier}'.");
 
-                OptionFormat format = this.format.Options.Find((OptionFormat f) => f.keys.Contains(key))
+                OptionFormat format = this.format.AllOptions.FirstOrDefault((OptionFormat f) => f.keys.Contains(key))
                     ?? throw new ArgumentParserException($"No option found with name: '{key}'.");
                 
                 if (format.parameters.Count > 0) {
@@ -141,8 +136,7 @@ public class ArgumentParser {
                 // Read short option (-.??? ???)
                 do {
                     char key = Read($"No option name found after '{Identifier}'.");
-
-                    OptionFormat format = this.format.Options.Find((OptionFormat f) => f.keys.Contains(key.ToString()))
+                    OptionFormat format = this.format.AllOptions.FirstOrDefault((OptionFormat f) => f.keys.Contains(key.ToString()))
                         ?? throw new ArgumentParserException($"No option found with name: '{key}'.");
                     
                     if (format.parameters.Count > 0) {
@@ -163,10 +157,10 @@ public class ArgumentParser {
             Options.Add(new Option(format, usedKey, [.. parameters]));
         }
         private void ReadArgument() {
-            if (Arguments.Count >= format.Arguments.Count) throw new ArgumentParserException($"Too many arguments. Requires {format.Arguments.Count}, got {Arguments.Count}.");
-            string content = ReadPart($"Not enough arguments. Requires {format.Arguments.Count}, only got {Arguments.Count}.");
+            if (Arguments.Count >= format.AllArguments.Count) throw new ArgumentParserException($"Too many arguments. Requires {format.AllArguments.Count}, got {Arguments.Count+1}.");
+            string content = ReadPart($"Not enough arguments. Requires {format.AllArguments.Count}, only got {Arguments.Count}.");
 
-            Arguments.Add(new Argument(format.Arguments[Arguments.Count], content));
+            Arguments.Add(new Argument(format.AllArguments[Arguments.Count], content));
         }
     }
     
@@ -217,8 +211,8 @@ public class ArgumentParser {
             if (Format.CurrentVersionOption.quit) Environment.Exit(0);
         }
 
-        if (Arguments.Length < Format.Arguments.Count) {
-            ShowError($"Too few arguments. Requires {Format.Arguments.Count}, only got {Arguments.Length}.");
+        if (Arguments.Length < Format.AllArguments.Count) {
+            ShowError($"Too few arguments. Requires {Format.AllArguments.Count}, only got {Arguments.Length}.");
             if (Format.shouldExitOnError) Environment.Exit(1);
         }
     }
@@ -319,26 +313,51 @@ public class ArgumentParser {
 
         string msg = "\n";
 
-        if (Format.Arguments.Count > 0) msg += "Required arguments:\n";
-        foreach (ArgumentFormat argument in Format.Arguments) {
-            msg += $"\t[{argument.name}]: {argument.description}\n";
-        }
-        
-        if (Format.Options.Count > 0) msg += "Options:\n";
-        foreach (OptionFormat option in Format.Options) {
-            msg += "\t[";
-            for (int i = 0; i < option.keys.Count; i++) {
-                string key = option.keys[i];
-                msg += (key.Length > 1 ? "--" : "-") + key;
-                if (i < option.keys.Count-1) {
-                    msg += ", ";
+        foreach (CategoryFormat category in Format.Categories) {
+            msg+=new StyleBuilder().Bold().Text(category.name+":").Bold(false).NewLine();
+
+            foreach (ArgumentFormat argument in category.Arguments) {
+                msg+="\t"+new StyleBuilder().Foreground(Color.Cyan).Text(argument.name).ResetForeground().Text(": "+argument.description).NewLine().ToString();
+            }
+
+            foreach (OptionFormat option in category.Options) {
+                msg+="\t";
+                StyleBuilder builder = new StyleBuilder().Foreground(Color.Green).Text("[");
+                for (int i = 0; i < option.keys.Count; i++) {
+                    string key = option.keys[i];
+                    builder.Bold().Text((key.Length > 1 ? "--" : "-")+key).Bold(false);
+                    if (i < option.keys.Count-1) {
+                        builder.Text(", ");
+                    }
                 }
+                builder.Text("]").ResetForeground().Text(": "+option.description).NewLine();
+                foreach (OptionFormat.ParameterFormat parameter in option.parameters) {
+                    builder.Text("\t\t").Foreground(Color.Orange).Text(parameter.name).ResetForeground().Text(": "+parameter.description).NewLine();
+                }
+                msg+=builder;
             }
-            msg += $"]: {option.description}\n";
-            foreach (OptionFormat.ParameterFormat parameter in option.parameters) {
-                msg += $"\t\t[{parameter.name}]: {parameter.description}\n";
-            }
+            msg+="\n";
         }
+        // if (Format.AllArguments.Count > 0) msg += "Required arguments:\n";
+        // foreach (ArgumentFormat argument in Format.AllArguments) {
+        //     msg += $"\t[{argument.name}]: {argument.description}\n";
+        // }
+        
+        // if (Format.AllOptions.Count > 0) msg += "Options:\n";
+        // foreach (OptionFormat option in Format.AllOptions) {
+        //     msg += "\t[";
+        //     for (int i = 0; i < option.keys.Count; i++) {
+        //         string key = option.keys[i];
+        //         msg += (key.Length > 1 ? "--" : "-") + key;
+        //         if (i < option.keys.Count-1) {
+        //             msg += ", ";
+        //         }
+        //     }
+        //     msg += $"]: {option.description}\n";
+        //     foreach (OptionFormat.ParameterFormat parameter in option.parameters) {
+        //         msg += $"\t\t[{parameter.name}]: {parameter.description}\n";
+        //     }
+        // }
 
         Terminal.Write(msg);
     }
