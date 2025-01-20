@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "program": "${workspaceFolder}/examples/Args/bin/Debug/net8.0/Args.dll",
-            "args": ["a", "b"],
+            "args": ["argument", "-ab", "-c"],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "integratedTerminal",

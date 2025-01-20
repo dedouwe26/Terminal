@@ -7,7 +7,7 @@
     <PublishTrimmed>true</PublishTrimmed>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageId>0xDED.Terminal</PackageId>
-    <Version>4.2.1</Version>
+    <Version>4.2.2</Version>
     <Authors>0xDED</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

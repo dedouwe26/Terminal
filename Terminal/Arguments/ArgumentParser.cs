@@ -100,6 +100,16 @@ public class ArgumentParser {
             if (peeked == -1) { ArgumentIndex++; return HasNext(); }
             return true;
         }
+        private bool HasNextInPart() {
+            int peeked;
+            try {
+                peeked = Stream.Peek();
+            } catch (IndexOutOfRangeException) {
+                return false;
+            }
+            if (peeked == -1) { return false; }
+            return true;
+        }
 
         private string ReadPart(string failMsg = "Not enough parameters given.") {
             string part;
@@ -110,7 +120,7 @@ public class ArgumentParser {
             }
             if (part == "") {
                 ArgumentIndex++;
-                return ReadPart();
+                return ReadPart(failMsg);
             }
             ArgumentIndex++;
             return part;
@@ -144,7 +154,7 @@ public class ArgumentParser {
                         break;
                     }
                     Options.Add(new Option(format, key.ToString(), null));
-                } while (HasNext());
+                } while (HasNextInPart());
             }
         }
         private void ReadOptionParameters(OptionFormat format, string usedKey) {
