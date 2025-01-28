@@ -32,10 +32,11 @@ class Program {
         SubLogger subsublogger = sublogger2.CreateSubLogger("sub", "sub-sub", severity:Severity.Trace);
 
         // sublogger2.SubLoggers[sublogger2.SubLoggers.Keys.ToArray()[0]]
-        // NOTE: The difference between child ID and ID is that the child ID is used by the parent (last bit) and the ID is used by the Loggers Register (full ID).
+        // NOTE: The difference between child ID and ID is that the child ID is used by the parent (last bit) and
+        //       the ID is used by the Loggers Register (full ID).
         //  - child ID : "sub-sub"
         //  -       ID : "Logging Example.Sub 2.sub-sub"
-        sublogger2.SubLoggers[subsublogger.childID].LogTrace("This is the sub logger of "+sublogger2.Name); // Gets sublogger from parent
+        sublogger2.GetSubLogger(subsublogger.childID)!.LogTrace("This is the sub logger of "+sublogger2.Name); // Gets sublogger from parent
 
         // Tree of loggers (names of variables):
         // logger + sublogger1
@@ -45,11 +46,13 @@ class Program {
         Terminal.WriteLine();
 
         // Change name format of terminal target, can also be done with FileTarget:
-        (subsublogger.GetTarget(0) as TerminalTarget)!.NameFormat = "{0} - {1}";
+        subsublogger.GetTarget<TerminalTarget>()!.NameFormat = "{0} - {1}"; 
         subsublogger.LogDebug("<<< Different name format");
 
         // Change message format, can also be done with FileTarget:
-        (sublogger2.GetTarget(0) as TerminalTarget)!.Format = "<{1}>: {3}: ({2}) : {5}{4}"+ANSI.Styles.ResetAll;
+        sublogger2.GetTarget<TerminalTarget>(0)!.Format = "<{1}>: {3}: ({2}) : {5}{4}"+ANSI.Styles.ResetAll;
+        // NOTE: Knowing the index is faster with more targets!
+        
         sublogger2.LogDebug("Wow cool new format!");
 
         // Can listen for unhandled exceptions in the current app domain.

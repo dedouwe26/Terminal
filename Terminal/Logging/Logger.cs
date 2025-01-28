@@ -94,6 +94,20 @@ public class Logger : IDisposable, IEquatable<Logger> {
     }
 
     /// <summary>
+    /// Checks if this logger has a target with that type.
+    /// </summary>
+    /// <typeparam name="T">The type of the target.</typeparam>
+    /// <returns>True if it has that target type.</returns>
+    public bool HasTarget<T>() where T : ITarget {
+        foreach ((ITarget t, _) in Targets) {
+            if (t is T) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Gets the target's index.
     /// </summary>
     /// <param name="target">The target which index to get.</param>
@@ -101,6 +115,20 @@ public class Logger : IDisposable, IEquatable<Logger> {
     public int GetTargetIndex(ITarget target) {
         for (int i = 0; i < Targets.Count; i++) {
             if (ReferenceEquals(Targets[i].target, target)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// Gets the first-matching target's index, which type is <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of the target.</typeparam>
+    /// <returns>The index of the target or -1 if the target could not be found.</returns>
+    public int GetTargetIndex<T>() where T : ITarget {
+        for (int i = 0; i < Targets.Count; i++) {
+            if (Targets[i].target is T) {
                 return i;
             }
         }
@@ -119,13 +147,69 @@ public class Logger : IDisposable, IEquatable<Logger> {
             return null;
         }
     }
+    /// <summary>
+    /// Gets the target from its index or default.
+    /// </summary>
+    /// <typeparam name="T">The type of the target.</typeparam>
+    /// <param name="index">The target index.</param>
+    /// <returns>The target if there is one and if it is a <typeparamref name="T"/>.</returns>
+    public T? GetTarget<T>(int index) where T : class, ITarget {
+        try {
+            return Targets[index].target as T;
+        } catch (IndexOutOfRangeException) {
+            return default;
+        }
+    }
+    /// <summary>
+    /// Gets the first target with that type or default.
+    /// </summary>
+    /// <typeparam name="T">The type of the target.</typeparam>
+    /// <returns>The first found target with that type, if there is one and if it is a <typeparamref name="T"/>.</returns>
+    public T? GetTarget<T>() where T : ITarget {
+        foreach ((ITarget target, _) in Targets) {
+            if (target is T t) {
+                return t;
+            }
+        }
+        return default;
+    }
 
     /// <summary>
-    /// Sets if a target is enabled.
+    /// Sets whether a target is enabled.
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="enabled">True if enabled.</param>
-    /// <returns>True if there is a Target with that type.</returns>
+    /// <param name="target">The target to enable or disable.</param>
+    /// <param name="enabled">True if it should be enabled.</param>
+    /// <returns>True if it could find that target.</returns>
+    public bool SetTarget(ITarget target, bool enabled) {
+        int index = GetTargetIndex(target);
+        if (index == -1) {
+            return false;
+        }
+        Targets[index] = (target, enabled);
+        return true;
+    }
+
+    /// <summary>
+    /// Sets whether the first-matching target is enabled.
+    /// </summary>
+    /// <typeparam name="T">The type of the target.</typeparam>
+    /// <param name="enabled">True if it should be enabled.</param>
+    /// <returns>True if it could find a matching target.</returns>
+    public bool SetTarget<T>(bool enabled) where T : ITarget {
+        int index = GetTargetIndex<T>();
+        if (index == -1) {
+            return false;
+        }
+        Targets[index] = (Targets[index].target, enabled);
+        return true;
+    }
+
+    /// <summary>
+    /// Sets whether a target is enabled.
+    /// </summary>
+    /// <param name="index">The index of the target.</param>
+    /// <param name="enabled">True if it should be enabled.</param>
+    /// <returns>True if it was a valid index.</returns>
     public bool SetTarget(int index, bool enabled) {
         ITarget? target = GetTarget(index);
         if (target == null) {
@@ -140,21 +224,6 @@ public class Logger : IDisposable, IEquatable<Logger> {
     }
 
     /// <summary>
-    /// Sets if a target is enabled.
-    /// </summary>
-    /// <param name="target"></param>
-    /// <param name="enabled">True if enabled.</param>
-    /// <returns>True if there is a Target with that type.</returns>
-    public bool SetTarget(ITarget target, bool enabled) {
-        int index = GetTargetIndex(target);
-        if (index == -1) {
-            return false;
-        }
-        Targets[index] = (target, enabled);
-        return true;
-    }
-
-    /// <summary>
     /// Adds a target.
     /// </summary>
     /// <param name="target">The target to add (e.g. typeof(TerminalTarget)).</param>
@@ -164,7 +233,7 @@ public class Logger : IDisposable, IEquatable<Logger> {
     }
 
     /// <summary>
-    /// Removes a Target.
+    /// Removes a target at that index.
     /// </summary>
     /// <param name="index">The index of the target to remove.</param>
     /// <returns>True if the target could be found.</returns>
@@ -178,13 +247,21 @@ public class Logger : IDisposable, IEquatable<Logger> {
     }
 
     /// <summary>
-    /// Removes a Target.
+    /// Removes a target.
     /// </summary>
     /// <param name="target">The target to remove.</param>
     /// <returns>True if the target could be found.</returns>
     public bool RemoveTarget(ITarget target) {
         return RemoveTargetAt(GetTargetIndex(target));
-        
+    }
+
+    /// <summary>
+    /// Removes the first target with that type.
+    /// </summary>
+    /// <typeparam name="T">The type of the target.</typeparam>
+    /// <returns>True if the target could be found.</returns>
+    public bool RemoveTarget<T>() where T : ITarget {
+        return RemoveTargetAt(GetTargetIndex<T>());
     }
 
     /// <summary>
@@ -320,7 +397,7 @@ public class Logger : IDisposable, IEquatable<Logger> {
         string stackTrace = e.StackTrace ?? "   (Unknown)";
         if (e.InnerException != null) {
             Exception inner = e.InnerException;
-            string source = inner.Source == null ? string.Empty : $" (in: {inner.Source})";
+            string source = inner.Source == null ? "" : $" (in: {inner.Source})";
             return stackTrace + $"\nCaused by {inner.GetType().FullName} : '{inner.Message}'{source}: \n{GetStacktrace(inner)}";
         } else {
             return stackTrace;
@@ -335,8 +412,8 @@ public class Logger : IDisposable, IEquatable<Logger> {
         LogException(e, severity, false);
     }
     private void LogException(Exception e, Severity severity, bool unhandled) {
-        string source = e.Source == null ? string.Empty : $" (in: {e.Source})";
-        string unhandledStr = unhandled?"Unhandled Exception : " : string.Empty;
+        string source = e.Source == null ? "" : $" (in: {e.Source})";
+        string unhandledStr = unhandled?"Unhandled Exception : " : "";
         string message = $"{unhandledStr}{e.GetType().Name} ({e.GetType().FullName}) : '{e.Message}'\nTrace{source}:\n{GetStacktrace(e)}";
         
         if (e.HelpLink != null) {
