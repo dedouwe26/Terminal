@@ -50,7 +50,7 @@ public class TerminalTarget : FormattedTarget {
     /// <remarks>
     /// Writes a line.
     /// </remarks>
-    public override void Write<T>(Severity severity, DateTime time, Logger logger, T? text) where T : default {
+    public override void Write(Severity severity, DateTime time, Logger logger, object? text) {
         if (((byte)severity) < 2) {
             Error.WriteLine(GetText(logger, time, severity, text?.ToString() ?? "(Null)", SeverityColors[(byte)severity].ToForegroundANSI()));
         } else {

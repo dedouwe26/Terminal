@@ -93,19 +93,17 @@ public static class Terminal {
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the terminal, with a style.
     /// </summary>
-    /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
-    public static void Write<T>(T? text, Style? style = null) {
+    public static void Write(object? text, Style? style = null) {
         Out.Write((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the terminal, with a style.
     /// </summary>
-    /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
     /// <param name="text">The thing to write to the terminal.</param>
     /// <param name="style">The text decoration to use.</param>
-    public static void WriteLine<T>(T? text, Style? style = null) {
+    public static void WriteLine(object? text, Style? style = null) {
         Out.WriteLine((style ?? new Style()).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -113,7 +111,7 @@ public static class Terminal {
     /// </summary>
     /// <param name="style">The text decoration to use.</param>
     public static void WriteLine(Style? style = null) {
-        WriteLine<object>(null, style);
+        WriteLine(null, style);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
@@ -121,7 +119,7 @@ public static class Terminal {
     /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
-    public static void WriteErrorLine<T>(T? text, Style? style = null) {
+    public static void WriteErrorLine<T>(object? text, Style? style = null) {
         Error.WriteLine((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -129,15 +127,14 @@ public static class Terminal {
     /// </summary>
     /// <param name="style">The text decoration to use (default: with red foreground).</param>
     public static void WriteErrorLine(Style? style = null) {
-        WriteLine<object>(null, style);
+        WriteLine(null, style);
     }
     /// <summary>
     /// Writes something (<see cref="object.ToString"/>) to the error stream, with a style.
     /// </summary>
-    /// <typeparam name="T">The type of what to write (<see cref="object.ToString"/>).</typeparam>
     /// <param name="text">The text to write to the error output stream.</param>
     /// <param name="style">The style to use (default: with red foreground).</param>
-    public static void WriteError<T>(T? text, Style? style = null) {
+    public static void WriteError(object? text, Style? style = null) {
         Error.Write((style ?? new Style {ForegroundColor = Colors.Red}).ToANSI()+text?.ToString()+ANSI.Styles.ResetAll);
     }
     /// <summary>
@@ -160,11 +157,10 @@ public static class Terminal {
     /// <summary>
     /// Sets the something (<see cref="object.ToString"/>) at a <paramref name="pos"/>, with a <paramref name="style"/>.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="text">The thing to set at <paramref name="pos"/> to the terminal.</param>
     /// <param name="pos">The position to set <paramref name="text"/> at.</param>
     /// <param name="style">The text decoration to use.</param>
-    public static void Set<T>(T? text, (int x, int y) pos, Style? style = null) {
+    public static void Set(object? text, (int x, int y) pos, Style? style = null) {
         Goto(pos);
         Write(text, style);
     }
@@ -172,11 +168,10 @@ public static class Terminal {
     /// <summary>
     /// Sets the something in the error stream (<see cref="object.ToString"/>) at a <paramref name="pos"/>, with a <paramref name="style"/>.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     /// <param name="text">The thing to set at <paramref name="pos"/> to the terminal.</param>
     /// <param name="pos">The position to set <paramref name="text"/> at.</param>
     /// <param name="style">The text decoration to use.</param>
-    public static void SetError<T>(T? text, (int x, int y) pos, Style? style = null) {
+    public static void SetError(object? text, (int x, int y) pos, Style? style = null) {
         Goto(pos);
         WriteError(text, style);
     }

@@ -1,7 +1,7 @@
 namespace OxDED.Terminal.Logging;
 
 /// <summary>
-/// Logger severity.
+/// Logger severity (from high severity to low severity).
 /// </summary>
 public enum Severity : byte {
     /// 
