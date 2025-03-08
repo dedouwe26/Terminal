@@ -73,8 +73,9 @@ public class Assertion {
     /// <returns>This assertion.</returns>
     public Assertion Log(Logger logger, Severity severity = Severity.Error) {
         logger.LogTrace($"Assertion done: {ToString()}");
-        logger.Log(severity, $"Assertion failed with result: {result}");
-        return this;
+        return OnFailure(failedAssertion => {
+            logger.Log(severity, $"Assertion failed with result: {result}");
+        });
     }
 
     /// <summary>
@@ -83,7 +84,7 @@ public class Assertion {
     /// <param name="exception">The exception to throw (defaults to <see cref="AssertException{T}"/>).</param>
     /// <returns>This assertion.</returns>
     public Assertion Throw(Exception? exception = null) {
-        return OnFailure((Assertion failedAssertion) => {
+        return OnFailure(failedAssertion => {
             throw exception ?? new AssertException<Assertion>("Assertion failed", this);
         });
     }

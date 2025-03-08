@@ -51,7 +51,7 @@ public abstract class FormattedTarget : ITarget {
     }
 
     /// <inheritdoc/>
-    public abstract void Write<T>(Severity severity, DateTime time, Logger logger, T? text);
+    public abstract void Write(Severity severity, DateTime time, Logger logger, object? text);
 
     /// <inheritdoc/>
     public abstract void Dispose();

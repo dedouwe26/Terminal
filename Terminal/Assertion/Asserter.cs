@@ -172,6 +172,5 @@ public static class AsserterExtension {
     /// <returns>A new exception assertion.</returns>
     public static ExceptionAssertion<Exception> Throws(this Asserter<Action> asserter) {
         return Assert.Throws(asserter.value);
-        
     }
 }

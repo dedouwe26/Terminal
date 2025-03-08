@@ -23,7 +23,7 @@ class Program {
 
         // Assertions contain methods to check or handle the result:
         Assert.Is(4, 2).Log(logger)
-            .OnFailure((Assertion failedAssertion) => { // Gets executed when the result is not Success.
+            .OnFailure(failedAssertion => { // Gets executed when the result is not Success.
                 logger.LogFatal("Panic!");
             })
             .IsSuccess(); // True if the result is Success.

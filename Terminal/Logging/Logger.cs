@@ -245,10 +245,9 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// <summary>
     /// Logs something (<see cref="object.ToString"/>).
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
     /// <param name="severity">The severity of the text.</param>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void Log<T>(Severity severity, T? text) {
+    public void Log(Severity severity, object? text) {
         DateTime time = DateTime.Now;
         OnLog?.Invoke(this, text?.ToString()??"", severity, time);
         if (((byte)severity) > ((byte)logLevel)) { return; }
@@ -262,61 +261,54 @@ public class Logger : IDisposable, IEquatable<Logger> {
     /// <summary>
     /// Logs something with Trace severity.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogTrace<T>(T? text) {
+    public void LogTrace(object? text) {
         Log(Severity.Trace, text);
     }
     /// <summary>
     /// Logs something with Debug severity.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogDebug<T>(T? text) {
+    public void LogDebug(object? text) {
         Log(Severity.Debug, text);
     }
     /// <summary>
     /// Logs something with Info severity.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogInfo<T>(T? text) {
+    public void LogInfo(object? text) {
         Log(Severity.Info, text);
     }
     /// <summary>
     /// Logs something with Message severity.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogMessage<T>(T? text) {
+    public void LogMessage(object? text) {
         Log(Severity.Message, text);
     }
     /// <summary>
     /// Logs something with Warning severity.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogWarning<T>(T? text) {
+    public void LogWarning(object? text) {
         Log(Severity.Warning, text);
     }
     /// <summary>
     /// Logs something with Error severity.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogError<T>(T? text) {
+    public void LogError(object? text) {
         Log(Severity.Error, text);
     }
     /// <summary>
     /// Logs something with Fatal severity.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
     /// <param name="text">The text to write (<see cref="object.ToString"/>).</param>
-    public void LogFatal<T>(T? text) {
+    public void LogFatal(object? text) {
         Log(Severity.Fatal, text);
     }
 
-    private string GetStacktrace(Exception e) {
+    private static string GetStacktrace(Exception e) {
         string stackTrace = e.StackTrace ?? "   (Unknown)";
         if (e.InnerException != null) {
             Exception inner = e.InnerException;

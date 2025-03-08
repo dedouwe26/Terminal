@@ -5,11 +5,11 @@ namespace OxDED.Terminal;
 /// </summary>
 public static class ANSI {
     /// <summary>
-    /// (1B)
+    /// (0x1B)
     /// </summary>
     public const string ESC = "\x1B";
     /// <summary>
-    /// CSI
+    /// CSI (ESC + [)
     /// </summary>
     public const string CSI = ESC+"[";
     
@@ -24,7 +24,7 @@ public static class ANSI {
     /// <summary>
     /// Will return as CSI{row};{column}R <para/>
     /// Where CSI is CSI,
-    /// {row} is the row,
+    /// {row} is the row and
     /// {column} is the column.
     /// </summary>
     public const string RequestCursorPosition = CSI+"6n";
